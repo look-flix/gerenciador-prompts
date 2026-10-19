@@ -1,0 +1,489 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#171717">
+<title>Meus Prompts</title>
+<style>
+:root{color-scheme:dark;--bg:#111;--panel:#191919;--line:#303030;--text:#f5f5f5;--muted:#aaa;--accent:#d9f99d}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px system-ui,sans-serif}
+button,input,textarea{font:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:#242424;color:var(--text);padding:10px 13px;border-radius:9px}
+button:hover{background:#333}
+button:disabled{opacity:.5;cursor:not-allowed}
+input,textarea{width:100%;background:#111;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:12px;outline:none}
+input:focus,textarea:focus{border-color:var(--accent)}
+textarea{resize:vertical;min-height:180px}
+header{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid var(--line);gap:12px}
+.brand{font-size:18px;font-weight:750}
+.brand span{color:var(--accent)}
+.muted{color:var(--muted);font-size:13px}
+#login{max-width:420px;margin:12vh auto;padding:24px}
+#login h1{font-size:30px;margin-bottom:8px}
+#login button{width:100%;margin-top:18px}
+#app{display:none}
+.layout{display:grid;grid-template-columns:260px minmax(0,1fr);min-height:calc(100vh - 64px)}
+aside{border-right:1px solid var(--line);padding:16px;min-width:0}
+.side-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+#tree{display:flex;flex-direction:column;gap:4px}
+.tree-item{display:flex;gap:8px;align-items:center;text-align:left;width:100%;border-color:transparent;background:transparent;overflow-wrap:anywhere}
+.tree-item.active{background:#30352a;border-color:#454b3d}
+.tree-item .folder-name{flex:1}
+main{padding:24px;min-width:0;max-width:1100px;width:100%;margin:0 auto}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}
+.toolbar button.primary,.primary{background:var(--accent);color:#171717;border-color:var(--accent);font-weight:650}
+#search{margin-bottom:10px}
+#crumb{color:var(--muted);font-size:13px;overflow-wrap:anywhere}
+#items{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:12px}
+.item{border:1px solid var(--line);border-radius:13px;padding:16px;min-width:0;background:var(--panel)}
+.item h3{margin:0 0 8px;font-size:16px;overflow-wrap:anywhere}
+.item p{white-space:pre-wrap;overflow-wrap:anywhere;color:var(--muted);font-size:13px;max-height:100px;overflow:hidden}
+.item-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.item-actions button{font-size:13px;padding:8px}
+.item-top{display:flex;justify-content:space-between;gap:8px}
+.star{color:var(--accent)}
+.empty{grid-column:1/-1;text-align:center;padding:50px 15px;color:var(--muted);border:1px dashed var(--line);border-radius:12px}
+#status{font-size:12px;color:var(--muted);max-width:180px;text-align:right}
+dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:15px;width:min(540px,calc(100% - 24px));padding:22px}
+dialog::backdrop{background:#000b}
+dialog h2{margin-top:0}
+.field{margin:15px 0;display:grid;gap:7px}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.danger{color:#ff9b9b}
+@media(max-width:650px){
+ header{padding:0 12px}
+ .layout{grid-template-columns:1fr}
+ aside{border-right:0;border-bottom:1px solid var(--line);padding:12px}
+ #tree{flex-direction:row;overflow-x:auto;padding-bottom:5px}
+ .tree-item{width:auto;white-space:nowrap;flex-shrink:0}
+ main{padding:16px 12px}
+ #status{max-width:100px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">✳ Meus <span>Prompts</span></div>
+  <div id="status">Desconectado</div>
+</header>
+
+<section id="login">
+  <h1>Seus prompts,<br>em qualquer lugar.</h1>
+  <p class="muted">Organize ideias, salve seus melhores prompts e acesse tudo no PC e no celular.</p>
+  <button id="loginBtn" class="primary">Entrar com Google</button>
+  <p id="loginError" class="muted"></p>
+</section>
+
+<div id="app">
+  <div class="layout">
+    <aside>
+      <div class="side-title">
+        <strong>Minhas pastas</strong>
+        <button id="newFolder" title="Criar pasta">＋</button>
+      </div>
+      <div id="tree"></div>
+      <button id="rootBtn" style="width:100%;margin-top:10px">⌂ Todas as pastas</button>
+      <button id="logoutBtn" style="width:100%;margin-top:8px">Sair da conta</button>
+    </aside>
+    <main>
+      <div id="crumb">Todos os prompts</div>
+      <input id="search" placeholder="⌕ Buscar prompts..." aria-label="Buscar prompts">
+      <div class="toolbar">
+        <button id="newPrompt" class="primary">＋ Novo prompt</button>
+        <button id="favoritesBtn">★ Favoritos</button>
+        <button id="refreshBtn">Atualizar</button>
+      </div>
+      <div id="items"></div>
+    </main>
+  </div>
+</div>
+
+<dialog id="editor">
+  <form id="editorForm">
+    <h2 id="editorHeading">Novo prompt</h2>
+    <div class="field">
+      <label for="title">Título</label>
+      <input id="title" maxlength="160" required placeholder="Ex.: Prompt para criar vídeos">
+    </div>
+    <div class="field">
+      <label for="content">Conteúdo do prompt</label>
+      <textarea id="content" required placeholder="Escreva ou cole seu prompt aqui..."></textarea>
+    </div>
+    <div class="field">
+      <label for="destination">Salvar na pasta</label>
+      <select id="destination" style="width:100%;padding:12px;background:#111;color:white;border:1px solid #303030;border-radius:9px"></select>
+    </div>
+    <div class="modal-actions">
+      <button type="button" id="cancelEdit">Cancelar</button>
+      <button type="submit" class="primary" id="savePrompt">Salvar prompt</button>
+    </div>
+  </form>
+</dialog>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js";
+import {
+  getAuth, GoogleAuthProvider, signInWithPopup,
+  signInWithRedirect, getRedirectResult, onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js";
+import {
+  getFirestore, collection, doc, addDoc, updateDoc,
+  deleteDoc, onSnapshot, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDa9GqUdZjRE91-oOaV9gCInAWFzt13LWg",
+  authDomain: "meu-gerenciador-prompts.firebaseapp.com",
+  projectId: "meu-gerenciador-prompts",
+  storageBucket: "meu-gerenciador-prompts.firebasestorage.app",
+  messagingSenderId: "293076496698",
+  appId: "1:293076496698:web:a886fc10397ee5db4c2003"
+};
+
+const appFirebase = initializeApp(firebaseConfig);
+const auth = getAuth(appFirebase);
+const db = getFirestore(appFirebase);
+const provider = new GoogleAuthProvider();
+
+const $ = id => document.getElementById(id);
+const login = $("login");
+const appView = $("app");
+const status = $("status");
+const editor = $("editor");
+
+let user = null;
+let records = [];
+let currentFolder = null;
+let editingId = null;
+let showFavorites = false;
+let unsubscribe = null;
+let busy = false;
+
+function escapeHTML(value = "") {
+  return String(value).replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  })[c]);
+}
+
+function itemsRef() {
+  return collection(db, "users", user.uid, "items");
+}
+function itemRef(id) {
+  return doc(db, "users", user.uid, "items", id);
+}
+function getItem(id) {
+  return records.find(x => x.id === id);
+}
+function parentOf(item) {
+  return item.parentId || null;
+}
+function folders() {
+  return records.filter(x => x.type === "folder");
+}
+function prompts() {
+  return records.filter(x => x.type === "prompt");
+}
+function insideFolder(item, folderId) {
+  let parent = parentOf(item);
+  const seen = new Set();
+  while (parent && !seen.has(parent)) {
+    if (parent === folderId) return true;
+    seen.add(parent);
+    const folder = getItem(parent);
+    parent = folder ? parentOf(folder) : null;
+  }
+  return false;
+}
+function folderName(id) {
+  return id ? (getItem(id)?.title || "Pasta") : "Início";
+}
+function descendants(folderId) {
+  return folders().filter(f => insideFolder(f, folderId));
+}
+function renderTree() {
+  const host = $("tree");
+  const makeBranch = (parentId, depth, ancestors) => {
+    return folders()
+      .filter(f => parentOf(f) === parentId)
+      .sort((a,b) => a.title.localeCompare(b.title))
+      .map(f => {
+        if (ancestors.has(f.id) || depth > 20) return "";
+        const next = new Set(ancestors);
+        next.add(f.id);
+        return `<button class="tree-item ${currentFolder === f.id ? "active" : ""}"
+          data-folder="${escapeHTML(f.id)}" style="padding-left:${10 + depth*12}px">
+          <span>📁</span><span class="folder-name">${escapeHTML(f.title)}</span>
+        </button>${makeBranch(f.id, depth+1, next)}`;
+      }).join("");
+  };
+  host.innerHTML = makeBranch(null, 0, new Set()) ||
+    '<p class="muted">Crie sua primeira pasta pelo botão +.</p>';
+  host.querySelectorAll("[data-folder]").forEach(btn => {
+    btn.onclick = () => {
+      currentFolder = btn.dataset.folder;
+      showFavorites = false;
+      $("search").value = "";
+      render();
+    };
+  });
+}
+function renderBreadcrumb() {
+  if (!currentFolder) {
+    $("crumb").textContent = showFavorites ? "★ Favoritos" : "Todos os prompts";
+    return;
+  }
+  const chain = [];
+  let id = currentFolder;
+  const seen = new Set();
+  while (id && !seen.has(id)) {
+    seen.add(id);
+    const folder = getItem(id);
+    if (!folder) break;
+    chain.unshift(folder.title);
+    id = parentOf(folder);
+  }
+  $("crumb").textContent = chain.join(" / ");
+}
+function render() {
+  if (!user) return;
+  renderTree();
+  renderBreadcrumb();
+  const query = $("search").value.trim().toLocaleLowerCase("pt-BR");
+  let list = prompts().filter(p => {
+    if (showFavorites && !p.favorite) return false;
+    if (query) return (p.title+" "+p.content).toLocaleLowerCase("pt-BR").includes(query);
+    if (showFavorites) return true;
+    return currentFolder
+      ? parentOf(p) === currentFolder
+      : !parentOf(p);
+  });
+  list.sort((a,b) => a.title.localeCompare(b.title));
+  const folderList = query || showFavorites ? [] : folders()
+    .filter(f => parentOf(f) === currentFolder)
+    .sort((a,b) => a.title.localeCompare(b.title));
+  const host = $("items");
+  const folderHTML = folderList.map(f => `
+    <article class="item">
+      <div class="item-top"><h3>📁 ${escapeHTML(f.title)}</h3></div>
+      <p>Subpastas e prompts organizados aqui.</p>
+      <div class="item-actions">
+        <button data-open="${escapeHTML(f.id)}">Abrir pasta</button>
+        <button data-rename-folder="${escapeHTML(f.id)}">Renomear</button>
+        <button data-delete-folder="${escapeHTML(f.id)}" class="danger">Excluir</button>
+      </div>
+    </article>`).join("");
+  const promptHTML = list.map(p => `
+    <article class="item">
+      <div class="item-top">
+        <h3>${escapeHTML(p.title)}</h3>
+        <button data-fav="${escapeHTML(p.id)}" title="Favoritar" class="star">${p.favorite ? "★" : "☆"}</button>
+      </div>
+      <p>${escapeHTML(p.content)}</p>
+      <div class="item-actions">
+        <button data-copy="${escapeHTML(p.id)}">Copiar</button>
+        <button data-edit="${escapeHTML(p.id)}">Editar</button>
+        <button data-move="${escapeHTML(p.id)}">Mover</button>
+        <button data-delete="${escapeHTML(p.id)}" class="danger">Excluir</button>
+      </div>
+    </article>`).join("");
+  host.innerHTML = folderHTML + promptHTML ||
+    '<div class="empty">Nada por aqui ainda.<br><br>Crie uma pasta ou adicione seu primeiro prompt.</div>';
+
+  host.querySelectorAll("[data-open]").forEach(b => b.onclick = () => {
+    currentFolder = b.dataset.open;
+    showFavorites = false;
+    $("search").value = "";
+    render();
+  });
+  host.querySelectorAll("[data-fav]").forEach(b => b.onclick = async () => {
+    const p = getItem(b.dataset.fav);
+    if (p) await safe(() => updateDoc(itemRef(p.id), {favorite: !p.favorite, updatedAt: serverTimestamp()}));
+  });
+  host.querySelectorAll("[data-copy]").forEach(b => b.onclick = async () => {
+    const p = getItem(b.dataset.copy);
+    if (!p) return;
+    try {
+      await navigator.clipboard.writeText(p.content);
+      b.textContent = "Copiado!";
+      setTimeout(() => { if (b.isConnected) b.textContent = "Copiar"; }, 1300);
+    } catch {
+      window.prompt("Copie seu prompt:", p.content);
+    }
+  });
+  host.querySelectorAll("[data-edit]").forEach(b => b.onclick = () => openEditor(getItem(b.dataset.edit)));
+  host.querySelectorAll("[data-delete]").forEach(b => b.onclick = async () => {
+    const p = getItem(b.dataset.delete);
+    if (p && confirm(`Excluir o prompt "${p.title}"?`))
+      await safe(() => deleteDoc(itemRef(p.id)));
+  });
+  host.querySelectorAll("[data-move]").forEach(b => b.onclick = async () => {
+    const p = getItem(b.dataset.move);
+    if (!p) return;
+    const choice = window.prompt(
+      "Digite o nome da pasta de destino ou deixe vazio para Início:\n" +
+      folders().map(f => `${f.title} [${f.id}]`).join("\n"),
+      folderName(parentOf(p))
+    );
+    if (choice === null) return;
+    const target = choice.trim() ? folders().find(f => f.title.toLowerCase() === choice.trim().toLowerCase()) : null;
+    if (choice.trim() && !target) return alert("Pasta não encontrada. Tente novamente.");
+    await safe(() => updateDoc(itemRef(p.id), {parentId: target?.id || null, updatedAt: serverTimestamp()}));
+  });
+  host.querySelectorAll("[data-rename-folder]").forEach(b => b.onclick = async () => {
+    const f = getItem(b.dataset.renameFolder);
+    if (!f) return;
+    const name = prompt("Novo nome da pasta:", f.title);
+    if (name?.trim()) await safe(() => updateDoc(itemRef(f.id), {title:name.trim(), updatedAt:serverTimestamp()}));
+  });
+  host.querySelectorAll("[data-delete-folder]").forEach(b => b.onclick = async () => {
+    const f = getItem(b.dataset.deleteFolder);
+    if (!f) return;
+    if (folders().some(x => parentOf(x) === f.id) || prompts().some(x => parentOf(x) === f.id))
+      return alert("Esta pasta não está vazia. Mova ou exclua primeiro o conteúdo e as subpastas.");
+    if (confirm(`Excluir a pasta "${f.title}"?`)) {
+      await safe(() => deleteDoc(itemRef(f.id)));
+      if (currentFolder === f.id) currentFolder = parentOf(f);
+    }
+  });
+}
+async function safe(action) {
+  if (busy) return;
+  busy = true;
+  status.textContent = "Salvando...";
+  try {
+    await action();
+  } catch (e) {
+    console.error(e);
+    alert("Não foi possível salvar. Verifique sua conexão e as regras do Firestore.");
+  } finally {
+    busy = false;
+    if (user) status.textContent = "Sincronização ativa";
+  }
+}
+function openEditor(p = null) {
+  editingId = p?.id || null;
+  $("editorHeading").textContent = p ? "Editar prompt" : "Novo prompt";
+  $("title").value = p?.title || "";
+  $("content").value = p?.content || "";
+  const destination = $("destination");
+  destination.innerHTML = '<option value="">Início</option>' +
+    folders().sort((a,b) => a.title.localeCompare(b.title))
+      .map(f => `<option value="${escapeHTML(f.id)}">${escapeHTML(folderName(f.parentId ? f.parentId : null) === "Início" ? f.title : getPath(f))}</option>`).join("");
+  destination.value = p ? (p.parentId || "") : (currentFolder || "");
+  editor.showModal();
+  $("title").focus();
+}
+function getPath(f) {
+  const chain = [f.title];
+  let id = parentOf(f);
+  const seen = new Set([f.id]);
+  while (id && !seen.has(id)) {
+    seen.add(id);
+    const parent = getItem(id);
+    if (!parent) break;
+    chain.unshift(parent.title);
+    id = parentOf(parent);
+  }
+  return chain.join(" / ");
+}
+
+$("loginBtn").onclick = async () => {
+  $("loginError").textContent = "";
+  try {
+    await signInWithPopup(auth, provider);
+  } catch (e) {
+    if (e.code === "auth/popup-blocked" || e.code === "auth/operation-not-supported-in-this-environment") {
+      try { await signInWithRedirect(auth, provider); }
+      catch (err) { $("loginError").textContent = err.message; }
+    } else {
+      $("loginError").textContent = e.message;
+    }
+  }
+};
+
+$("logoutBtn").onclick = () => signOut(auth);
+$("rootBtn").onclick = () => { currentFolder = null; showFavorites = false; $("search").value = ""; render(); };
+$("newFolder").onclick = async () => {
+  const title = prompt("Nome da nova pasta:");
+  if (!title?.trim() || !user) return;
+  await safe(() => addDoc(itemsRef(), {
+    type:"folder", title:title.trim(), content:"",
+    parentId:currentFolder || null, favorite:false,
+    createdAt:serverTimestamp(), updatedAt:serverTimestamp()
+  }));
+};
+$("newPrompt").onclick = () => openEditor();
+$("favoritesBtn").onclick = () => {
+  showFavorites = !showFavorites;
+  currentFolder = null;
+  $("search").value = "";
+  $("favoritesBtn").textContent = showFavorites ? "★ Ver todos" : "★ Favoritos";
+  render();
+};
+$("refreshBtn").onclick = () => render();
+$("search").addEventListener("input", () => {
+  if ($("search").value.trim()) {
+    currentFolder = null;
+    showFavorites = false;
+  }
+  render();
+});
+$("cancelEdit").onclick = () => editor.close();
+$("editorForm").onsubmit = async e => {
+  e.preventDefault();
+  if (!user) return;
+  const title = $("title").value.trim();
+  const content = $("content").value.trim();
+  const parentId = $("destination").value || null;
+  if (!title || !content) return;
+  const data = {type:"prompt", title, content, parentId, updatedAt:serverTimestamp()};
+  const button = $("savePrompt");
+  button.disabled = true;
+  try {
+    if (editingId) {
+      await updateDoc(itemRef(editingId), data);
+    } else {
+      await addDoc(itemsRef(), {...data, favorite:false, createdAt:serverTimestamp()});
+    }
+    editor.close();
+  } catch (err) {
+    console.error(err);
+    alert("Erro ao salvar. Confira sua conexão e as regras do banco.");
+  } finally {
+    button.disabled = false;
+  }
+};
+
+onAuthStateChanged(auth, currentUser => {
+  user = currentUser;
+  if (unsubscribe) unsubscribe();
+  login.style.display = user ? "none" : "block";
+  appView.style.display = user ? "block" : "none";
+  if (!user) {
+    records = [];
+    status.textContent = "Desconectado";
+    return;
+  }
+  status.textContent = "Conectando...";
+  unsubscribe = onSnapshot(itemsRef(), snapshot => {
+    records = snapshot.docs.map(d => ({id:d.id, ...d.data()}));
+    status.textContent = "Sincronização ativa";
+    render();
+  }, error => {
+    console.error(error);
+    status.textContent = "Erro de sincronização";
+    alert("Não foi possível carregar seus prompts. Verifique as regras do Firestore.");
+  });
+});
+
+getRedirectResult(auth).catch(e => {
+  console.error(e);
+  $("loginError").textContent = "Erro ao concluir login: " + e.message;
+});
+</script>
+</body>
+</html>
