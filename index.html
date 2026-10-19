@@ -119,6 +119,9 @@ dialog h2{margin-top:0}
         <button id="newPrompt" class="primary">＋ Novo prompt</button>
         <button id="favoritesBtn">★ Favoritos</button>
         <button id="refreshBtn">Atualizar</button>
+       <button id="exportBtn">⬇️ Exportar backup</button>
+ <button id="importBtn">⬆️ Importar backup</button>
+<input id="importFile" type="file" accept=".json,application/json" hidden>
       </div>
       <div id="items"></div>
     </main>
@@ -156,7 +159,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js";
 import {
   getFirestore, collection, doc, addDoc, updateDoc,
-  deleteDoc, onSnapshot, serverTimestamp
+  deleteDoc, onSnapshot, serverTimestamp, setDoc, writeBatch
 } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
 
 const firebaseConfig = {
