@@ -2,10 +2,11 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
  
-<link rel="manifest" href="manifest.json">
-<meta name="mobile-web-app-capable" content="yes">
+
 
 <head>
+ <link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#171717">
@@ -14,14 +15,7 @@
 :root{color-scheme:dark;--bg:#111;--panel:#191919;--line:#303030;--text:#f5f5f5;--muted:#aaa;--accent:#d9f99d}
 *{box-sizing:border-box}
 
- <script>
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js")
-      .catch(err => console.error("Erro ao registrar service worker:", err));
-  });
-}
-</script>
+ 
  
 body{margin:0;background:var(--bg);color:var(--text);font:15px system-ui,sans-serif}
 button,input,textarea{font:inherit}
@@ -39,6 +33,18 @@ header{height:64px;display:flex;align-items:center;justify-content:space-between
 #login h1{font-size:30px;margin-bottom:8px}
 #login button{width:100%;margin-top:18px}
 #app{display:none}
+ #authLoading{
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+}
+body.auth-loading header,
+body.auth-loading #login,
+body.auth-loading #app{
+  display:none;
+}
 .layout{display:grid;grid-template-columns:260px minmax(0,1fr);min-height:calc(100vh - 64px)}
 aside{border-right:1px solid var(--line);padding:16px;min-width:0}
 .side-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
@@ -78,7 +84,11 @@ dialog h2{margin-top:0}
 }
 </style>
 </head>
-<body>
+<body class="auth-loading">
+ <div id="authLoading" style="text-align:center;padding:80px 20px;color:#aaa">
+  <div style="font-size:28px;margin-bottom:12px">✳</div>
+  <p>Carregando seus prompts...</p>
+</div>
 <header>
   <div class="brand">✳ Meus <span>Prompts</span></div>
   <div id="status">Desconectado</div>
@@ -500,15 +510,29 @@ $("editorForm").onsubmit = async e => {
 
 onAuthStateChanged(auth, currentUser => {
   user = currentUser;
-  if (unsubscribe) unsubscribe();
+
+  if (unsubscribe) {
+    unsubscribe();
+    unsubscribe = null;
+  }
+
+  $("authLoading").style.display = "none";
+  document.body.classList.remove("auth-loading");
+  document.querySelector("header").style.display = "flex";
+
   login.style.display = user ? "none" : "block";
   appView.style.display = user ? "block" : "none";
+   
   if (!user) {
     records = [];
+    $("items").innerHTML = "";
+    $("tree").innerHTML = "";
     status.textContent = "Desconectado";
     return;
   }
+
   status.textContent = "Conectando...";
+
   unsubscribe = onSnapshot(itemsRef(), snapshot => {
     records = snapshot.docs.map(d => ({id:d.id, ...d.data()}));
     status.textContent = "Sincronização ativa";
@@ -524,6 +548,15 @@ getRedirectResult(auth).catch(e => {
   console.error(e);
   $("loginError").textContent = "Erro ao concluir login: " + e.message;
 });
+</script>
+
+ <script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js")
+      .catch(err => console.error("Erro ao registrar service worker:", err));
+  });
+}
 </script>
 </body>
 </html>
