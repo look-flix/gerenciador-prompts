@@ -354,15 +354,41 @@ function render() {
     if (name?.trim()) await safe(() => updateDoc(itemRef(f.id), {title:name.trim(), updatedAt:serverTimestamp()}));
   });
   host.querySelectorAll("[data-delete-folder]").forEach(b => b.onclick = async () => {
-    const f = getItem(b.dataset.deleteFolder);
-    if (!f) return;
-    if (folders().some(x => parentOf(x) === f.id) || prompts().some(x => parentOf(x) === f.id))
-      return alert("Esta pasta não está vazia. Mova ou exclua primeiro o conteúdo e as subpastas.");
-    if (confirm(`Excluir a pasta "${f.title}"?`)) {
-      await safe(() => deleteDoc(itemRef(f.id)));
-      if (currentFolder === f.id) currentFolder = parentOf(f);
+  const f = getItem(b.dataset.deleteFolder);
+  if (!f) return;
+
+  const folderId = f.id;
+  const parentId = parentOf(f);
+
+  const toDelete = records.filter(item =>
+    item.id === folderId || insideFolder(item, folderId)
+  );
+
+  const promptCount = toDelete.filter(item => item.type === "prompt").length;
+  const subfolderCount = toDelete.filter(item => item.type === "folder").length - 1;
+
+  const message =
+    `Excluir a pasta "${f.title}" e todo o seu conteúdo?\n\n` +
+    `• ${promptCount} prompt(s)\n` +
+    `• ${Math.max(0, subfolderCount)} subpasta(s)\n\n` +
+    `Essa ação é permanente!`;
+
+  if (!confirm(message)) return;
+
+  await safe(async () => {
+    await Promise.all(
+      toDelete.map(item => deleteDoc(itemRef(item.id)))
+    );
+
+    const current = getItem(currentFolder);
+    if (
+      currentFolder === folderId ||
+      (current && insideFolder(current, folderId))
+    ) {
+      currentFolder = parentId;
     }
   });
+});
 }
 async function safe(action) {
   if (busy) return;
