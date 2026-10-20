@@ -159,7 +159,8 @@ import {
 } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js";
 import {
   getFirestore, collection, doc, addDoc, updateDoc,
-  deleteDoc, onSnapshot, serverTimestamp, setDoc, writeBatch
+  deleteDoc, onSnapshot, serverTimestamp, setDoc,
+  writeBatch, Timestamp
 } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -560,6 +561,165 @@ if ("serviceWorker" in navigator) {
       .catch(err => console.error("Erro ao registrar service worker:", err));
   });
 }
+  // ===== EXPORTAR E IMPORTAR BACKUP =====
+
+$("exportBtn").onclick = () => {
+  if (!user) {
+    alert("Entre na sua conta antes de exportar.");
+    return;
+  }
+
+  const backup = {
+    app: "Meu Gerenciador de Prompts",
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    items: records.map(({ id, ...item }) => ({
+      id,
+      ...item,
+      createdAt: item.createdAt?.toDate
+        ? item.createdAt.toDate().toISOString()
+        : item.createdAt ?? null,
+      updatedAt: item.updatedAt?.toDate
+        ? item.updatedAt.toDate().toISOString()
+        : item.updatedAt ?? null
+    }))
+  };
+
+  const blob = new Blob(
+    [JSON.stringify(backup, null, 2)],
+    { type: "application/json" }
+  );
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "backup-meus-prompts.json";
+  link.click();
+
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  $("status").textContent = "Backup baixado com sucesso!";
+};
+
+$("importBtn").onclick = () => {
+  if (!user) {
+    alert("Entre na sua conta antes de importar.");
+    return;
+  }
+
+  $("importFile").click();
+};
+
+$("importFile").onchange = async event => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  try {
+    const backup = JSON.parse(await file.text());
+
+    if (
+      backup.app !== "Meu Gerenciador de Prompts" ||
+      backup.version !== 1 ||
+      !Array.isArray(backup.items)
+    ) {
+      throw new Error("Arquivo de backup inválido.");
+    }
+
+    const valid = backup.items.every(item =>
+      item &&
+      typeof item.id === "string" &&
+      ["folder", "prompt"].includes(item.type) &&
+      typeof item.title === "string" &&
+      typeof item.content === "string" &&
+      (item.parentId === null ||
+        typeof item.parentId === "string")
+    );
+
+    if (!valid) {
+      throw new Error("Existem itens inválidos no arquivo.");
+    }
+
+    const ids = new Set(backup.items.map(item => item.id));
+
+    if (ids.size !== backup.items.length) {
+      throw new Error("O arquivo contém IDs duplicados.");
+    }
+
+    if (backup.items.some(item =>
+      item.parentId && !ids.has(item.parentId)
+    )) {
+      throw new Error("O arquivo contém referências de pastas inválidas.");
+    }
+
+    if (!confirm(
+      "ATENÇÃO: importar este backup substituirá todos os prompts e pastas atuais desta conta.\\n\\n" +
+      "Recomendamos baixar um backup atual antes de continuar.\\n\\n" +
+      "Deseja continuar?"
+    )) {
+      return;
+    }
+
+    $("status").textContent = "Restaurando backup...";
+
+    const currentItems = [...records];
+    const newItems = backup.items.map(item => {
+      const { id, ...data } = item;
+
+      for (const field of ["createdAt", "updatedAt"]) {
+        if (typeof data[field] === "string") {
+          const date = new Date(data[field]);
+          data[field] = Number.isNaN(date.getTime())
+            ? null
+            : Timestamp.fromDate(date);
+        } else if (!data[field]) {
+          delete data[field];
+        }
+      }
+
+      return { id, data };
+    });
+
+    // Apaga e grava em lotes pequenos para respeitar o limite do Firestore.
+    const operations = [
+      ...currentItems.map(item => ({
+        type: "delete",
+        id: item.id
+      })),
+      ...newItems.map(item => ({
+        type: "set",
+        id: item.id,
+        data: item.data
+      }))
+    ];
+
+    for (let i = 0; i < operations.length; i += 400) {
+      const batch = writeBatch(db);
+
+      for (const op of operations.slice(i, i + 400)) {
+        const ref = itemRef(op.id);
+
+        if (op.type === "delete") {
+          batch.delete(ref);
+        } else {
+          batch.set(ref, op.data);
+        }
+      }
+
+      await batch.commit();
+    }
+
+    $("status").textContent =
+      "Backup restaurado! Aguarde a sincronização.";
+  } catch (error) {
+    console.error("Erro no backup:", error);
+    alert(
+      "Não foi possível importar o backup. " +
+      "Seus dados podem não ter sido totalmente restaurados. " +
+      "Confira o console antes de tentar novamente."
+    );
+  } finally {
+    event.target.value = "";
+  }
+};
 </script>
 </body>
 </html>
