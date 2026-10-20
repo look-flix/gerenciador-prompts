@@ -117,6 +117,9 @@ dialog h2{margin-top:0}
       <input id="search" placeholder="⌕ Buscar prompts..." aria-label="Buscar prompts">
       <div class="toolbar">
         <button id="newPrompt" class="primary">＋ Novo prompt</button>
+       <button id="selectAllBtn">☑️ Selecionar todos</button>
+<button id="clearSelectionBtn">Desmarcar</button>
+<button id="moveSelectedBtn">📂 Mover selecionados (0)</button>
         <button id="favoritesBtn">★ Favoritos</button>
         <button id="refreshBtn">Atualizar</button>
        <button id="exportBtn">⬇️ Exportar backup</button>
@@ -190,6 +193,12 @@ let editingId = null;
 let showFavorites = false;
 let unsubscribe = null;
 let busy = false;
+ let selectedPromptIds = new Set();
+
+function updateBulkMoveButton() {
+  $("moveSelectedBtn").textContent =
+    `📂 Mover selecionados (${selectedPromptIds.size})`;
+}
 
 function escapeHTML(value = "") {
   return String(value).replace(/[&<>"']/g, c => ({
@@ -306,6 +315,17 @@ function render() {
     </article>`).join("");
   const promptHTML = list.map(p => `
     <article class="item">
+      <div style="margin-bottom:10px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input
+            type="checkbox"
+            data-select-prompt="${escapeHTML(p.id)}"
+            ${selectedPromptIds.has(p.id) ? "checked" : ""}
+            style="width:auto"
+          >
+          Selecionar
+        </label>
+      </div>
       <div class="item-top">
         <h3>${escapeHTML(p.title)}</h3>
         <button data-fav="${escapeHTML(p.id)}" title="Favoritar" class="star">${p.favorite ? "★" : "☆"}</button>
@@ -320,6 +340,21 @@ function render() {
     </article>`).join("");
   host.innerHTML = folderHTML + promptHTML ||
     '<div class="empty">Nada por aqui ainda.<br><br>Crie uma pasta ou adicione seu primeiro prompt.</div>';
+ host.querySelectorAll("[data-select-prompt]").forEach(input => {
+  input.onchange = () => {
+    const id = input.dataset.selectPrompt;
+
+    if (input.checked) {
+      selectedPromptIds.add(id);
+    } else {
+      selectedPromptIds.delete(id);
+    }
+
+    updateBulkMoveButton();
+  };
+});
+
+updateBulkMoveButton();
 
   host.querySelectorAll("[data-open]").forEach(b => b.onclick = () => {
     currentFolder = b.dataset.open;
@@ -809,6 +844,112 @@ $("importFile").onchange = async event => {
   } finally {
     event.target.value = "";
   }
+};
+
+$("selectAllBtn").onclick = () => {
+  document.querySelectorAll("#items [data-select-prompt]").forEach(input => {
+    selectedPromptIds.add(input.dataset.selectPrompt);
+    input.checked = true;
+  });
+
+  updateBulkMoveButton();
+};
+
+$("clearSelectionBtn").onclick = () => {
+  selectedPromptIds.clear();
+
+  document.querySelectorAll("#items [data-select-prompt]").forEach(input => {
+    input.checked = false;
+  });
+
+  updateBulkMoveButton();
+};
+
+$("moveSelectedBtn").onclick = async () => {
+  const selected = records.filter(item =>
+    item.type === "prompt" && selectedPromptIds.has(item.id)
+  );
+
+  if (selected.length === 0) {
+    alert("Selecione pelo menos um prompt para mover.");
+    return;
+  }
+
+  const folderOptions = folders().sort((a, b) =>
+    getPath(a).localeCompare(getPath(b))
+  );
+
+  const folderMenu = [
+    "0 = Início",
+    ...folderOptions.map((folder, index) =>
+      `${index + 1} = ${getPath(folder)}`
+    )
+  ].join("\n");
+
+  const answer = prompt(
+    `Mover ${selected.length} prompt(s) para qual pasta?\n\n` +
+    folderMenu +
+    "\n\nDigite o número da pasta desejada:",
+    "0"
+  );
+
+  if (answer === null) return;
+
+  const choice = answer.trim();
+
+  if (!/^\d+$/.test(choice)) {
+    alert("Digite um número válido.");
+    return;
+  }
+
+  const number = Number(choice);
+
+  if (number < 0 || number > folderOptions.length) {
+    alert("Essa opção não existe.");
+    return;
+  }
+
+  const destinationId =
+    number === 0 ? null : folderOptions[number - 1].id;
+
+  if (selected.every(p => (p.parentId || null) === destinationId)) {
+    alert("Todos os prompts selecionados já estão nessa pasta.");
+    return;
+  }
+
+  const destinationName = destinationId
+    ? getPath(getItem(destinationId))
+    : "Início";
+
+  if (!confirm(
+    `Mover ${selected.length} prompt(s) para "${destinationName}"?`
+  )) {
+    return;
+  }
+
+  await safe(async () => {
+    for (let i = 0; i < selected.length; i += 400) {
+      const batch = writeBatch(db);
+
+      for (const item of selected.slice(i, i + 400)) {
+        batch.update(itemRef(item.id), {
+          parentId: destinationId,
+          updatedAt: serverTimestamp()
+        });
+      }
+
+      await batch.commit();
+    }
+
+    const count = selected.length;
+    selectedPromptIds.clear();
+    render();
+    updateBulkMoveButton();
+
+    alert(
+      `${count} prompt(s) movido(s) para "${destinationName}" com sucesso!`
+    );
+  });
 };
 
  
