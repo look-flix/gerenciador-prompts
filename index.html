@@ -601,19 +601,41 @@ $("importBtn").onclick = () => {
 };
 
 
+
 $("importFile").onchange = async event => {
   const file = event.target.files[0];
   if (!file) return;
 
   try {
-    const backup = JSON.parse(await file.text());
+    let backup = JSON.parse(await file.text());
+    let formatoSpacePrompts = false;
 
+    // FORMATO 1: arquivo exportado do SpacePrompts
+    if (Array.isArray(backup)) {
+      formatoSpacePrompts = true;
+
+      backup = {
+        app: "Meu Gerenciador de Prompts",
+        version: 1,
+       items: backup.map((item, index) => ({
+  id: String(item?.id ?? `space-${index}`),
+  type: "prompt",
+  title: item?.title,
+  content: item?.prompt,
+  parentId: null
+}))
+      };
+    }
+
+    // FORMATO 2: backup do próprio gerenciador
     if (
       backup.app !== "Meu Gerenciador de Prompts" ||
       backup.version !== 1 ||
       !Array.isArray(backup.items)
     ) {
-      throw new Error("Arquivo de backup inválido.");
+      throw new Error(
+        "Formato não reconhecido. Selecione um backup do gerenciador ou um JSON exportado do SpacePrompts."
+      );
     }
 
     const valid = backup.items.every(item =>
@@ -627,7 +649,9 @@ $("importFile").onchange = async event => {
     );
 
     if (!valid) {
-      throw new Error("Existem itens inválidos no arquivo.");
+      throw new Error(
+        "Existem itens inválidos no arquivo. Confira se os títulos e conteúdos estão preenchidos corretamente."
+      );
     }
 
     const ids = new Set(backup.items.map(item => item.id));
@@ -639,28 +663,49 @@ $("importFile").onchange = async event => {
     if (backup.items.some(item =>
       item.parentId && !ids.has(item.parentId)
     )) {
-      throw new Error("O arquivo contém referências de pastas inválidas.");
+      throw new Error(
+        "O arquivo contém referências de pastas inválidas."
+      );
     }
 
-    const mode = prompt(
-      "Como deseja importar?\n\n" +
-      "1 = Restaurar tudo (substitui os dados atuais)\n" +
-      "2 = Adicionar ao que já existe (mantém os atuais)\n\n" +
-      "Digite 1 ou 2:"
-    );
-
-    if (mode !== "1" && mode !== "2") return;
-
-    if (mode === "1" && !confirm(
-      "ATENÇÃO: todos os prompts e pastas atuais serão substituídos.\n\n" +
-      "Você já baixou um backup atual?\n\n" +
-      "Clique OK para continuar."
-    )) {
+    if (backup.items.length === 0) {
+      alert("O arquivo não contém nenhum prompt para importar.");
       return;
     }
 
     if (!user) {
       throw new Error("Entre na sua conta antes de importar.");
+    }
+
+    let mode;
+
+    if (formatoSpacePrompts) {
+      // Arquivos do SpacePrompts são adicionados sem apagar os atuais.
+      const confirmed = confirm(
+        `Foram encontrados ${backup.items.length} prompts no SpacePrompts.\n\n` +
+        "Eles serão adicionados ao seu gerenciador, sem apagar os itens atuais.\n\n" +
+        "Deseja continuar?"
+      );
+
+      if (!confirmed) return;
+      mode = "2";
+    } else {
+      mode = prompt(
+        "Como deseja importar?\n\n" +
+        "1 = Restaurar tudo (substitui os dados atuais)\n" +
+        "2 = Adicionar ao que já existe (mantém os atuais)\n\n" +
+        "Digite 1 ou 2:"
+      );
+
+      if (mode !== "1" && mode !== "2") return;
+
+      if (mode === "1" && !confirm(
+        "ATENÇÃO: todos os prompts e pastas atuais serão substituídos.\n\n" +
+        "Você já baixou um backup atual?\n\n" +
+        "Clique OK para continuar."
+      )) {
+        return;
+      }
     }
 
     $("status").textContent = "Preparando importação...";
@@ -673,7 +718,9 @@ $("importFile").onchange = async event => {
         idMap.set(item.id, doc(itemsRef()).id);
       });
     } else {
-      backup.items.forEach(item => idMap.set(item.id, item.id));
+      backup.items.forEach(item => {
+        idMap.set(item.id, item.id);
+      });
     }
 
     const newItems = backup.items.map(item => {
@@ -689,6 +736,7 @@ $("importFile").onchange = async event => {
       for (const field of ["createdAt", "updatedAt"]) {
         if (typeof data[field] === "string") {
           const date = new Date(data[field]);
+
           data[field] = Number.isNaN(date.getTime())
             ? serverTimestamp()
             : Timestamp.fromDate(date);
@@ -697,14 +745,20 @@ $("importFile").onchange = async event => {
         }
       }
 
-      return { id: idMap.get(id), data };
+      return {
+        id: idMap.get(id),
+        data
+      };
     });
 
     const operations = [];
 
     if (mode === "1") {
       currentItems.forEach(item => {
-        operations.push({ type: "delete", id: item.id });
+        operations.push({
+          type: "delete",
+          id: item.id
+        });
       });
     }
 
@@ -732,33 +786,31 @@ $("importFile").onchange = async event => {
       await batch.commit();
     }
 
-    $("status").textContent = mode === "1"
-      ? "Backup restaurado!"
-      : "Itens adicionados com sucesso!";
+    $("status").textContent = formatoSpacePrompts
+      ? "Prompts do SpacePrompts importados!"
+      : mode === "1"
+        ? "Backup restaurado!"
+        : "Itens adicionados com sucesso!";
 
-    alert(mode === "1"
-      ? "Backup restaurado com sucesso!"
-      : "Os itens do backup foram adicionados sem apagar os atuais.");
+    alert(formatoSpacePrompts
+      ? `${newItems.length} prompts do SpacePrompts foram importados!\n\nOs itens anteriores foram mantidos.`
+      : mode === "1"
+        ? "Backup restaurado com sucesso!"
+        : "Os itens do backup foram adicionados sem apagar os atuais."
+    );
+
   } catch (error) {
-    console.error("Erro no backup:", error);
+    console.error("Erro na importação:", error);
+
     alert(
-      "Não foi possível concluir a importação. " +
-      "Confira o console para ver o erro."
+      "Não foi possível concluir a importação.\n\n" +
+      error.message
     );
   } finally {
     event.target.value = "";
   }
 };
 
-</script>
-
- <script>
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js")
-      .catch(err => console.error("Erro ao registrar service worker:", err));
-  });
-}
  
 </script>
 </body>
