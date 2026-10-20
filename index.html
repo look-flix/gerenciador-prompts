@@ -552,15 +552,6 @@ getRedirectResult(auth).catch(e => {
   console.error(e);
   $("loginError").textContent = "Erro ao concluir login: " + e.message;
 });
-</script>
-
- <script>
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js")
-      .catch(err => console.error("Erro ao registrar service worker:", err));
-  });
-}
   // ===== EXPORTAR E IMPORTAR BACKUP =====
 
 $("exportBtn").onclick = () => {
@@ -720,6 +711,16 @@ $("importFile").onchange = async event => {
     event.target.value = "";
   }
 };
+</script>
+
+ <script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js")
+      .catch(err => console.error("Erro ao registrar service worker:", err));
+  });
+}
+ 
 </script>
 </body>
 </html>
