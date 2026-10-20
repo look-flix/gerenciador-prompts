@@ -600,6 +600,7 @@ $("importBtn").onclick = () => {
   $("importFile").click();
 };
 
+
 $("importFile").onchange = async event => {
   const file = event.target.files[0];
   if (!file) return;
@@ -621,7 +622,7 @@ $("importFile").onchange = async event => {
       ["folder", "prompt"].includes(item.type) &&
       typeof item.title === "string" &&
       typeof item.content === "string" &&
-      (item.parentId === null ||
+      (item.parentId == null ||
         typeof item.parentId === "string")
     );
 
@@ -641,46 +642,79 @@ $("importFile").onchange = async event => {
       throw new Error("O arquivo contém referências de pastas inválidas.");
     }
 
-    if (!confirm(
-      "ATENÇÃO: importar este backup substituirá todos os prompts e pastas atuais desta conta.\\n\\n" +
-      "Recomendamos baixar um backup atual antes de continuar.\\n\\n" +
-      "Deseja continuar?"
+    const mode = prompt(
+      "Como deseja importar?\n\n" +
+      "1 = Restaurar tudo (substitui os dados atuais)\n" +
+      "2 = Adicionar ao que já existe (mantém os atuais)\n\n" +
+      "Digite 1 ou 2:"
+    );
+
+    if (mode !== "1" && mode !== "2") return;
+
+    if (mode === "1" && !confirm(
+      "ATENÇÃO: todos os prompts e pastas atuais serão substituídos.\n\n" +
+      "Você já baixou um backup atual?\n\n" +
+      "Clique OK para continuar."
     )) {
       return;
     }
 
-    $("status").textContent = "Restaurando backup...";
+    if (!user) {
+      throw new Error("Entre na sua conta antes de importar.");
+    }
+
+    $("status").textContent = "Preparando importação...";
 
     const currentItems = [...records];
+    const idMap = new Map();
+
+    if (mode === "2") {
+      backup.items.forEach(item => {
+        idMap.set(item.id, doc(itemsRef()).id);
+      });
+    } else {
+      backup.items.forEach(item => idMap.set(item.id, item.id));
+    }
+
     const newItems = backup.items.map(item => {
-      const { id, ...data } = item;
+      const { id, ...originalData } = item;
+      const data = { ...originalData };
+
+      if (data.parentId) {
+        data.parentId = idMap.get(data.parentId);
+      } else {
+        data.parentId = null;
+      }
 
       for (const field of ["createdAt", "updatedAt"]) {
         if (typeof data[field] === "string") {
           const date = new Date(data[field]);
           data[field] = Number.isNaN(date.getTime())
-            ? null
+            ? serverTimestamp()
             : Timestamp.fromDate(date);
         } else if (!data[field]) {
-          delete data[field];
+          data[field] = serverTimestamp();
         }
       }
 
-      return { id, data };
+      return { id: idMap.get(id), data };
     });
 
-    // Apaga e grava em lotes pequenos para respeitar o limite do Firestore.
-    const operations = [
-      ...currentItems.map(item => ({
-        type: "delete",
-        id: item.id
-      })),
-      ...newItems.map(item => ({
+    const operations = [];
+
+    if (mode === "1") {
+      currentItems.forEach(item => {
+        operations.push({ type: "delete", id: item.id });
+      });
+    }
+
+    newItems.forEach(item => {
+      operations.push({
         type: "set",
         id: item.id,
         data: item.data
-      }))
-    ];
+      });
+    });
 
     for (let i = 0; i < operations.length; i += 400) {
       const batch = writeBatch(db);
@@ -698,19 +732,24 @@ $("importFile").onchange = async event => {
       await batch.commit();
     }
 
-    $("status").textContent =
-      "Backup restaurado! Aguarde a sincronização.";
+    $("status").textContent = mode === "1"
+      ? "Backup restaurado!"
+      : "Itens adicionados com sucesso!";
+
+    alert(mode === "1"
+      ? "Backup restaurado com sucesso!"
+      : "Os itens do backup foram adicionados sem apagar os atuais.");
   } catch (error) {
     console.error("Erro no backup:", error);
     alert(
-      "Não foi possível importar o backup. " +
-      "Seus dados podem não ter sido totalmente restaurados. " +
-      "Confira o console antes de tentar novamente."
+      "Não foi possível concluir a importação. " +
+      "Confira o console para ver o erro."
     );
   } finally {
     event.target.value = "";
   }
 };
+
 </script>
 
  <script>
