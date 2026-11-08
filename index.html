@@ -1,169 +1,300 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
- 
-
-
 <head>
- <link rel="manifest" href="manifest.json">
-<meta name="mobile-web-app-capable" content="yes">
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#171717">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#f6f6f4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)">
 <title>Meus Prompts</title>
 <style>
-:root{color-scheme:dark;--bg:#111;--panel:#191919;--line:#303030;--text:#f5f5f5;--muted:#aaa;--accent:#d9f99d}
+:root{
+  --bg:#f6f6f4;--panel:#fff;--hover:#f0f0ec;--line:#e5e5e0;--text:#1b1b1a;--muted:#7a7a73;
+  --accent:#2f6f4f;--accent-text:#fff;--accent-soft:#e4efe8;--danger:#c0392b;--fav:#d49b00;
+  --shadow:0 10px 30px rgba(0,0,0,.12);color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#121212;--panel:#1a1a1a;--hover:#232323;--line:#2b2b2b;--text:#f2f2ef;--muted:#9a9a93;
+    --accent:#c8ea93;--accent-text:#141414;--accent-soft:#283020;--danger:#ff8a80;--fav:#f5c542;
+    --shadow:0 10px 30px rgba(0,0,0,.55);color-scheme:dark;
+  }
+}
 *{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0;padding:0}
+svg{width:18px;height:18px;flex:none}
+[hidden]{display:none!important}
+.muted{color:var(--muted)}
 
- 
- 
-body{margin:0;background:var(--bg);color:var(--text);font:15px system-ui,sans-serif}
-button,input,textarea{font:inherit}
-button{cursor:pointer;border:1px solid var(--line);background:#242424;color:var(--text);padding:10px 13px;border-radius:9px}
-button:hover{background:#333}
-button:disabled{opacity:.5;cursor:not-allowed}
-input,textarea{width:100%;background:#111;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:12px;outline:none}
-input:focus,textarea:focus{border-color:var(--accent)}
-textarea{resize:vertical;min-height:180px}
-header{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid var(--line);gap:12px}
-.brand{font-size:18px;font-weight:750}
+input[type=text],input[type=search],textarea,select{
+  width:100%;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:11px 12px;outline:none
+}
+input:focus,textarea:focus,select:focus{border-color:var(--accent)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:40px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:var(--panel);font-weight:500;white-space:nowrap}
+.btn:hover{background:var(--hover)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.primary{background:var(--accent);color:var(--accent-text);border-color:transparent;font-weight:600}
+.btn.primary:hover{filter:brightness(1.06)}
+.btn.danger{color:var(--danger)}
+.btn.danger-solid{background:var(--danger);color:#fff;border-color:transparent;font-weight:600}
+.icon-btn{width:38px;height:38px;display:inline-grid;place-items:center;border-radius:10px;color:var(--muted);flex:none}
+.icon-btn:hover{background:var(--hover);color:var(--text)}
+
+/* ---------- estados de tela ---------- */
+#boot,#login,#app{display:none}
+body.booting #boot{display:grid}
+body.out #login{display:grid}
+body.in #app{display:block}
+#boot{min-height:100vh;place-items:center;color:var(--muted)}
+#login{min-height:100vh;place-items:center;padding:24px}
+.login-card{max-width:380px;width:100%;text-align:center}
+.logo{font-size:40px;color:var(--accent);line-height:1}
+.login-card h1{font-size:28px;margin:14px 0 8px}
+.login-card .btn{width:100%;height:48px;margin-top:24px;font-size:16px}
+.err{color:var(--danger);font-size:13px;min-height:1em}
+
+/* ---------- topo ---------- */
+.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;padding:10px 20px;padding-top:calc(10px + env(safe-area-inset-top));background:var(--bg);border-bottom:1px solid var(--line)}
+.brand{font-weight:700;font-size:17px;white-space:nowrap;display:flex;align-items:center;gap:6px}
 .brand span{color:var(--accent)}
-.muted{color:var(--muted);font-size:13px}
-#login{max-width:420px;margin:12vh auto;padding:24px}
-#login h1{font-size:30px;margin-bottom:8px}
-#login button{width:100%;margin-top:18px}
-#app{display:none}
- #authLoading{
-  min-height:100vh;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-}
-body.auth-loading header,
-body.auth-loading #login,
-body.auth-loading #app{
-  display:none;
-}
-.layout{display:grid;grid-template-columns:260px minmax(0,1fr);min-height:calc(100vh - 64px)}
-aside{border-right:1px solid var(--line);padding:16px;min-width:0}
-.side-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-#tree{display:flex;flex-direction:column;gap:4px}
-.tree-item{display:flex;gap:8px;align-items:center;text-align:left;width:100%;border-color:transparent;background:transparent;overflow-wrap:anywhere}
-.tree-item.active{background:#30352a;border-color:#454b3d}
-.tree-item .folder-name{flex:1}
-main{padding:24px;min-width:0;max-width:1100px;width:100%;margin:0 auto}
-.toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}
-.toolbar button.primary,.primary{background:var(--accent);color:#171717;border-color:var(--accent);font-weight:650}
-#search{margin-bottom:10px}
-#crumb{color:var(--muted);font-size:13px;overflow-wrap:anywhere}
-#items{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:12px}
-.item{border:1px solid var(--line);border-radius:13px;padding:16px;min-width:0;background:var(--panel)}
-.item h3{margin:0 0 8px;font-size:16px;overflow-wrap:anywhere}
-.item p{white-space:pre-wrap;overflow-wrap:anywhere;color:var(--muted);font-size:13px;max-height:100px;overflow:hidden}
-.item-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
-.item-actions button{font-size:13px;padding:8px}
-.item-top{display:flex;justify-content:space-between;gap:8px}
-.star{color:var(--accent)}
-.empty{grid-column:1/-1;text-align:center;padding:50px 15px;color:var(--muted);border:1px dashed var(--line);border-radius:12px}
-#status{font-size:12px;color:var(--muted);max-width:180px;text-align:right}
-dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:15px;width:min(540px,calc(100% - 24px));padding:22px}
-dialog::backdrop{background:#000b}
-dialog h2{margin-top:0}
-.field{margin:15px 0;display:grid;gap:7px}
-.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
-.danger{color:#ff9b9b}
-@media(max-width:650px){
- header{padding:0 12px}
- .layout{grid-template-columns:1fr}
- aside{border-right:0;border-bottom:1px solid var(--line);padding:12px}
- #tree{flex-direction:row;overflow-x:auto;padding-bottom:5px}
- .tree-item{width:auto;white-space:nowrap;flex-shrink:0}
- main{padding:16px 12px}
- #status{max-width:100px}
+.search{flex:1;max-width:560px;position:relative;margin:0 auto}
+.search svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.search input{height:42px;padding-left:40px;border-radius:999px}
+
+/* ---------- layout ---------- */
+.layout{display:grid;grid-template-columns:250px minmax(0,1fr);max-width:1200px;margin:0 auto}
+aside{position:sticky;top:63px;height:calc(100vh - 63px);overflow:auto;padding:16px 10px 40px;border-right:1px solid var(--line)}
+.nav-item{display:flex;align-items:center;gap:9px;width:100%;padding:8px 10px;border-radius:8px;text-align:left}
+.nav-item svg{color:var(--muted)}
+.nav-item:hover{background:var(--hover)}
+.nav-item.active{background:var(--accent-soft);font-weight:600}
+.nav-item.active svg{color:var(--accent)}
+.nav-item .label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nav-head{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:18px 10px 6px}
+.nav-empty{color:var(--muted);font-size:13px;padding:4px 10px;margin:0}
+.count{font-size:12px;color:var(--muted);min-width:18px;text-align:right}
+
+main{padding:22px 28px 140px;min-width:0}
+.crumbs{display:flex;flex-wrap:wrap;align-items:center;gap:2px;font-size:13px;color:var(--muted);margin-bottom:2px}
+.crumbs button{padding:3px 6px;border-radius:6px;color:var(--muted)}
+.crumbs button:hover{background:var(--hover);color:var(--text)}
+.page-head{display:flex;align-items:center;gap:4px;margin-bottom:16px;min-width:0}
+.page-head h1{font-size:22px;margin:0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#backBtn{margin-left:-8px}
+
+/* ---------- listas ---------- */
+.lists{display:grid;gap:14px}
+.list{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.row{display:flex;align-items:center;gap:4px;min-height:54px;padding:0 6px 0 10px;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.row:hover{background:var(--hover)}
+.row.selected{background:var(--accent-soft)}
+.row.folder{cursor:pointer;padding-left:16px;gap:10px}
+.row.folder>svg{color:var(--accent)}
+.row .main{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;text-align:left;padding:10px 6px;cursor:pointer}
+.row .title{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.row .sub{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--muted);margin-top:1px}
+.fav-mark{color:var(--fav);margin-right:5px}
+.fav-mark svg{width:13px;height:13px;vertical-align:-1px}
+.chk{width:36px;height:36px;display:grid;place-items:center;cursor:pointer;flex:none}
+.chk input{width:18px;height:18px;margin:0;accent-color:var(--accent);cursor:pointer}
+.copy{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:9px;border:1px solid var(--line);font-size:13px;font-weight:500;white-space:nowrap;background:var(--panel);flex:none}
+.copy svg{width:15px;height:15px}
+.copy:hover{border-color:var(--accent)}
+.copy.done{background:var(--accent);color:var(--accent-text);border-color:transparent}
+.empty{text-align:center;padding:56px 20px;color:var(--muted);border:1px dashed var(--line);border-radius:14px}
+.empty strong{display:block;color:var(--text);font-size:16px;margin-bottom:6px}
+
+/* ---------- botão + / barra de seleção ---------- */
+#fab{position:fixed;right:22px;bottom:calc(22px + env(safe-area-inset-bottom));width:56px;height:56px;border-radius:18px;background:var(--accent);color:var(--accent-text);box-shadow:var(--shadow);display:grid;place-items:center;z-index:30}
+#fab svg{width:26px;height:26px}
+#selbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom));z-index:30;display:flex;align-items:center;gap:2px;padding:6px;background:var(--text);color:var(--bg);border-radius:14px;box-shadow:var(--shadow);max-width:calc(100% - 24px)}
+#selbar button{height:38px;padding:0 12px;border-radius:9px;font-weight:500;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+#selbar button:hover{background:rgba(127,127,127,.25)}
+#selbar .sel-count{padding:0 8px 0 2px;font-weight:600;white-space:nowrap}
+#selbar .sep{width:1px;height:22px;background:rgba(127,127,127,.4);margin:0 4px}
+.short{display:none}
+
+/* ---------- menu ⋯ ---------- */
+.menu{position:fixed;z-index:50;min-width:210px;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:6px}
+.menu button{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border-radius:8px;text-align:left}
+.menu button svg{color:var(--muted)}
+.menu button:hover{background:var(--hover)}
+.menu .danger,.menu .danger svg{color:var(--danger)}
+
+/* ---------- janelas ---------- */
+dialog{padding:0;border:1px solid var(--line);border-radius:16px;background:var(--panel);color:var(--text);width:min(440px,calc(100% - 24px));max-height:calc(100% - 24px);box-shadow:var(--shadow)}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+.dlg{padding:20px}
+.dlg h2,.dlg h3{margin:0 0 6px}
+.dlg h3{font-size:17px}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;flex-wrap:wrap}
+#askText{margin:0 0 4px;white-space:pre-line}
+#askInput{margin-top:12px}
+
+dialog.sheet{width:min(760px,calc(100% - 24px))}
+.ed{display:flex;flex-direction:column;gap:12px}
+.ed-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:-2px}
+.ed-head h2{font-size:15px;color:var(--muted);font-weight:600;margin:0}
+.ed-title{font-size:18px!important;font-weight:600}
+#content-field{min-height:320px;resize:vertical;line-height:1.55}
+.ed-folder{display:flex;align-items:center;gap:8px;color:var(--muted)}
+.ed-folder select{flex:1}
+.ed-actions{display:flex;gap:8px;align-items:center}
+.grow{flex:1}
+
+.pick-list{max-height:55vh;overflow:auto;margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:4px}
+.pick{display:flex;align-items:center;gap:9px;width:100%;padding:10px 12px;border-radius:8px;text-align:left}
+.pick svg{color:var(--muted)}
+.pick:hover{background:var(--hover)}
+.pick small{margin-left:auto;color:var(--muted)}
+.pick.current{opacity:.6}
+
+.acct{padding:12px 0 6px}
+.acct strong{display:block}
+.set-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:16px 0 6px}
+.set-item{display:flex;align-items:center;gap:12px;width:100%;padding:12px;border-radius:10px;text-align:left}
+.set-item:hover{background:var(--hover)}
+.set-item svg{color:var(--muted)}
+.set-item small{display:block;color:var(--muted);font-size:12px}
+.set-item.danger,.set-item.danger svg{color:var(--danger)}
+#syncLine{font-size:12px;margin:12px 0 0}
+
+#toast{display:none;position:fixed;inset:auto auto calc(96px + env(safe-area-inset-bottom)) 50%;transform:translateX(-50%);margin:0;border:0;background:var(--text);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;z-index:100;max-width:calc(100% - 32px);text-align:center;box-shadow:var(--shadow)}
+#toast.show{display:block}
+
+/* ---------- celular ---------- */
+@media (max-width:760px){
+  .top{flex-wrap:wrap;padding:10px 14px;padding-top:calc(10px + env(safe-area-inset-top));gap:8px}
+  .brand{flex:1}
+  .search{order:3;flex-basis:100%;max-width:none}
+  .layout{grid-template-columns:1fr}
+  aside{display:none}
+  main{padding:14px 12px 140px}
+  .row{min-height:58px}
+  .page-head h1{font-size:20px}
+  .long{display:none}
+  .short{display:inline}
+  #selbar{left:12px;right:12px;transform:none;max-width:none;justify-content:space-between}
+  #selbar button{padding:0 10px}
+  dialog.sheet{width:100%;max-width:100%;height:100%;height:100dvh;max-height:100%;margin:0;border:0;border-radius:0}
+  dialog.sheet .ed{height:100%;padding-top:calc(14px + env(safe-area-inset-top));padding-bottom:calc(14px + env(safe-area-inset-bottom))}
+  dialog.sheet #content-field{flex:1;min-height:0;resize:none}
 }
 </style>
 </head>
-<body class="auth-loading">
- <div id="authLoading" style="text-align:center;padding:80px 20px;color:#aaa">
-  <div style="font-size:28px;margin-bottom:12px">✳</div>
-  <p>Carregando seus prompts...</p>
-</div>
-<header>
-  <div class="brand">✳ Meus <span>Prompts</span></div>
-  <div id="status">Desconectado</div>
-</header>
+<body class="booting">
+
+<div id="boot"><div style="text-align:center"><div class="logo">✳</div><p>Carregando seus prompts…</p></div></div>
 
 <section id="login">
-  <h1>Seus prompts,<br>em qualquer lugar.</h1>
-  <p class="muted">Organize ideias, salve seus melhores prompts e acesse tudo no PC e no celular.</p>
-  <button id="loginBtn" class="primary">Entrar com Google</button>
-  <p id="loginError" class="muted"></p>
+  <div class="login-card">
+    <div class="logo">✳</div>
+    <h1>Meus Prompts</h1>
+    <p class="muted">Seus prompts organizados em pastas, no PC e no celular.</p>
+    <button id="loginBtn" class="btn primary">Entrar com Google</button>
+    <p id="loginError" class="err"></p>
+  </div>
 </section>
 
 <div id="app">
+  <header class="top">
+    <button class="brand" id="brandBtn">✳ Meus <span>Prompts</span></button>
+    <label class="search"><span data-i="search"></span><input id="search" type="search" placeholder="Buscar em todas as pastas" autocomplete="off"></label>
+    <button class="icon-btn" id="settingsBtn" aria-label="Configurações" title="Configurações" data-i="gear"></button>
+  </header>
+
   <div class="layout">
-    <aside>
-      <div class="side-title">
-        <strong>Minhas pastas</strong>
-        <button id="newFolder" title="Criar pasta">＋</button>
-      </div>
-      <div id="tree"></div>
-      <button id="rootBtn" style="width:100%;margin-top:10px">⌂ Todas as pastas</button>
-      <button id="logoutBtn" style="width:100%;margin-top:8px">Sair da conta</button>
-    </aside>
+    <aside><nav id="tree"></nav></aside>
     <main>
-      <div id="crumb">Todos os prompts</div>
-      <input id="search" placeholder="⌕ Buscar prompts..." aria-label="Buscar prompts">
-      <div class="toolbar">
-        <button id="newPrompt" class="primary">＋ Novo prompt</button>
-       <button id="selectAllBtn">☑️ Selecionar todos</button>
-<button id="clearSelectionBtn">Desmarcar</button>
-<button id="moveSelectedBtn">📂 Mover selecionados (0)</button>
-        <button id="favoritesBtn">★ Favoritos</button>
-        <button id="refreshBtn">Atualizar</button>
-       <button id="exportBtn">⬇️ Exportar backup</button>
- <button id="importBtn">⬆️ Importar backup</button>
-<input id="importFile" type="file" accept=".json,application/json" hidden>
+      <nav class="crumbs" id="crumbs"></nav>
+      <div class="page-head">
+        <button class="icon-btn" id="backBtn" aria-label="Voltar" data-i="back"></button>
+        <h1 id="pageTitle">Início</h1>
       </div>
-      <div id="items"></div>
+      <div id="content" class="lists"></div>
     </main>
+  </div>
+
+  <button id="fab" aria-label="Criar" title="Criar" data-i="plus"></button>
+
+  <div id="selbar" hidden>
+    <button id="selClear" aria-label="Cancelar seleção" data-i="x"></button>
+    <span class="sel-count" id="selCount"></span>
+    <span class="sep long"></span>
+    <button id="selAll"></button>
+    <button id="selMove" data-i="move"><span>Mover</span></button>
+    <button id="selDelete" data-i="trash"><span class="long">Excluir</span></button>
   </div>
 </div>
 
-<dialog id="editor">
-  <form id="editorForm">
-    <h2 id="editorHeading">Novo prompt</h2>
-    <div class="field">
-      <label for="title">Título</label>
-      <input id="title" maxlength="160" required placeholder="Ex.: Prompt para criar vídeos">
+<div id="menu" class="menu" hidden></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<dialog id="editor" class="sheet">
+  <form id="editorForm" class="dlg ed">
+    <div class="ed-head">
+      <h2 id="edHeading">Novo prompt</h2>
+      <button type="button" class="icon-btn" id="edClose" aria-label="Fechar" data-i="x"></button>
     </div>
-    <div class="field">
-      <label for="content">Conteúdo do prompt</label>
-      <textarea id="content" required placeholder="Escreva ou cole seu prompt aqui..."></textarea>
-    </div>
-    <div class="field">
-      <label for="destination">Salvar na pasta</label>
-      <select id="destination" style="width:100%;padding:12px;background:#111;color:white;border:1px solid #303030;border-radius:9px"></select>
-    </div>
-    <div class="modal-actions">
-      <button type="button" id="cancelEdit">Cancelar</button>
-      <button type="submit" class="primary" id="savePrompt">Salvar prompt</button>
+    <input id="title" type="text" class="ed-title" maxlength="160" placeholder="Título" required autocomplete="off">
+    <textarea id="content-field" placeholder="Escreva ou cole seu prompt aqui…" required></textarea>
+    <label class="ed-folder" title="Pasta"><span data-i="folder"></span><select id="destination" aria-label="Pasta"></select></label>
+    <div class="ed-actions">
+      <button type="button" class="btn" id="edCopy" data-i="copy"><span>Copiar</span></button>
+      <span class="grow"></span>
+      <button type="button" class="btn" id="edCancel">Cancelar</button>
+      <button type="submit" class="btn primary" id="savePrompt">Salvar</button>
     </div>
   </form>
+</dialog>
+
+<dialog id="picker">
+  <div class="dlg">
+    <h3 id="pickerTitle">Mover para…</h3>
+    <div id="pickerList" class="pick-list"></div>
+    <div class="modal-actions"><button type="button" class="btn" id="pickerCancel">Cancelar</button></div>
+  </div>
+</dialog>
+
+<dialog id="ask">
+  <div class="dlg">
+    <h3 id="askTitle"></h3>
+    <p id="askText" class="muted"></p>
+    <input id="askInput" type="text" autocomplete="off">
+    <div id="askBtns" class="modal-actions"></div>
+  </div>
+</dialog>
+
+<dialog id="settings">
+  <div class="dlg">
+    <h2>Configurações</h2>
+    <div class="acct"><strong id="acctName"></strong><span class="muted" id="acctEmail"></span></div>
+    <div class="set-label">Backup</div>
+    <button class="set-item" id="exportBtn" data-i="download"><span>Exportar backup<small>Baixa um arquivo .json com tudo</small></span></button>
+    <button class="set-item" id="importBtn" data-i="upload"><span>Importar backup<small>Do gerenciador ou do SpacePrompts</small></span></button>
+    <input id="importFile" type="file" accept=".json,application/json" hidden>
+    <div class="set-label">Conta</div>
+    <button class="set-item danger" id="logoutBtn" data-i="logout"><span>Sair da conta</span></button>
+    <p id="syncLine" class="muted"></p>
+    <div class="modal-actions"><button type="button" class="btn" id="settingsClose">Fechar</button></div>
+  </div>
 </dialog>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js";
 import {
   getAuth, GoogleAuthProvider, signInWithPopup,
-  signInWithRedirect, getRedirectResult, onAuthStateChanged,
-  signOut, setPersistence, browserLocalPersistence
+  signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut
 } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js";
 import {
   getFirestore, collection, doc, addDoc, updateDoc,
-  deleteDoc, onSnapshot, serverTimestamp, setDoc,
-  writeBatch, Timestamp
+  onSnapshot, serverTimestamp, writeBatch, Timestamp
 } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -180,306 +311,582 @@ const auth = getAuth(appFirebase);
 const db = getFirestore(appFirebase);
 const provider = new GoogleAuthProvider();
 
+/* ================= ÍCONES ================= */
+const sv = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const I = {
+  folder: sv('<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>'),
+  copy: sv('<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>'),
+  check: sv('<path d="M20 6 9 17l-5-5"/>'),
+  more: sv('<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>'),
+  gear: sv('<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>'),
+  search: sv('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>'),
+  plus: sv('<path d="M12 5v14M5 12h14"/>'),
+  star: sv('<path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3l-5.6 2.9 1.1-6.2L3 9.6l6.2-.9z"/>'),
+  starFill: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3l-5.6 2.9 1.1-6.2L3 9.6l6.2-.9z"/></svg>`,
+  home: sv('<path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/>'),
+  edit: sv('<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>'),
+  move: sv('<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 13h6m-2-2 2 2-2 2"/>'),
+  trash: sv('<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/>'),
+  x: sv('<path d="M18 6 6 18M6 6l12 12"/>'),
+  back: sv('<path d="M15 18l-6-6 6-6"/>'),
+  doc: sv('<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>'),
+  download: sv('<path d="M12 4v11m-5-5 5 5 5-5M4 20h16"/>'),
+  upload: sv('<path d="M12 20V9m-5 5 5-5 5 5M4 4h16"/>'),
+  logout: sv('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>')
+};
+document.querySelectorAll("[data-i]").forEach(el => el.insertAdjacentHTML("afterbegin", I[el.dataset.i] || ""));
+
+/* ================= ESTADO ================= */
 const $ = id => document.getElementById(id);
-const login = $("login");
-const appView = $("app");
-const status = $("status");
 const editor = $("editor");
+const menu = $("menu");
 
 let user = null;
 let records = [];
-let currentFolder = null;
-let editingId = null;
-let showFavorites = false;
 let unsubscribe = null;
-let busy = false;
- let selectedPromptIds = new Set();
+let currentFolder = null;   // null = Início
+let view = "folder";        // "folder" | "fav"
+let selected = new Set();
+let visiblePromptIds = [];
+let copiedId = null, copiedTimer = null;
+let editingId = null;
+let menuAnchor = null;
 
-function updateBulkMoveButton() {
-  $("moveSelectedBtn").textContent =
-    `📂 Mover selecionados (${selectedPromptIds.size})`;
-}
+/* ================= UTILITÁRIOS ================= */
+const esc = (v = "") => String(v).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" })[c]);
+const itemsRef = () => collection(db, "users", user.uid, "items");
+const itemRef = id => doc(db, "users", user.uid, "items", id);
+const getItem = id => records.find(x => x.id === id);
+const parentOf = x => x?.parentId || null;
+const folders = () => records.filter(x => x.type === "folder");
+const prompts = () => records.filter(x => x.type === "prompt");
+const ms = t => !t ? 0 : typeof t.toMillis === "function" ? t.toMillis()
+  : typeof t === "string" ? (Date.parse(t) || 0) : typeof t === "number" ? t : 0;
+const recency = p => ms(p.lastUsedAt) || ms(p.updatedAt) || ms(p.createdAt);
+const byName = (a, b) => a.title.localeCompare(b.title, "pt-BR", { sensitivity: "base", numeric: true });
+const query = () => $("search").value.trim();
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 
-function escapeHTML(value = "") {
-  return String(value).replace(/[&<>"']/g, c => ({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-  })[c]);
-}
-
-function itemsRef() {
-  return collection(db, "users", user.uid, "items");
-}
-function itemRef(id) {
-  return doc(db, "users", user.uid, "items", id);
-}
-function getItem(id) {
-  return records.find(x => x.id === id);
-}
-function parentOf(item) {
-  return item.parentId || null;
-}
-function folders() {
-  return records.filter(x => x.type === "folder");
-}
-function prompts() {
-  return records.filter(x => x.type === "prompt");
-}
 function insideFolder(item, folderId) {
   let parent = parentOf(item);
   const seen = new Set();
   while (parent && !seen.has(parent)) {
     if (parent === folderId) return true;
     seen.add(parent);
-    const folder = getItem(parent);
-    parent = folder ? parentOf(folder) : null;
+    parent = parentOf(getItem(parent));
   }
   return false;
 }
-function folderName(id) {
-  return id ? (getItem(id)?.title || "Pasta") : "Início";
-}
-function descendants(folderId) {
-  return folders().filter(f => insideFolder(f, folderId));
-}
-function renderTree() {
-  const host = $("tree");
-  const makeBranch = (parentId, depth, ancestors) => {
-    return folders()
-      .filter(f => parentOf(f) === parentId)
-      .sort((a,b) => a.title.localeCompare(b.title))
-      .map(f => {
-        if (ancestors.has(f.id) || depth > 20) return "";
-        const next = new Set(ancestors);
-        next.add(f.id);
-        return `<button class="tree-item ${currentFolder === f.id ? "active" : ""}"
-          data-folder="${escapeHTML(f.id)}" style="padding-left:${10 + depth*12}px">
-          <span>📁</span><span class="folder-name">${escapeHTML(f.title)}</span>
-        </button>${makeBranch(f.id, depth+1, next)}`;
-      }).join("");
-  };
-  host.innerHTML = makeBranch(null, 0, new Set()) ||
-    '<p class="muted">Crie sua primeira pasta pelo botão +.</p>';
-  host.querySelectorAll("[data-folder]").forEach(btn => {
-    btn.onclick = () => {
-      currentFolder = btn.dataset.folder;
-      showFavorites = false;
-      $("search").value = "";
-      render();
-    };
-  });
-}
-function renderBreadcrumb() {
-  if (!currentFolder) {
-    $("crumb").textContent = showFavorites ? "★ Favoritos" : "Todos os prompts";
-    return;
-  }
-  const chain = [];
-  let id = currentFolder;
+function chain(folderId) {
+  const out = [];
+  let id = folderId;
   const seen = new Set();
   while (id && !seen.has(id)) {
     seen.add(id);
-    const folder = getItem(id);
-    if (!folder) break;
-    chain.unshift(folder.title);
-    id = parentOf(folder);
+    const f = getItem(id);
+    if (!f) break;
+    out.unshift(f);
+    id = parentOf(f);
   }
-  $("crumb").textContent = chain.join(" / ");
+  return out;
 }
+const pathOf = folderId => folderId ? chain(folderId).map(f => f.title).join(" / ") : "Início";
+function folderTree(parentId = null, depth = 0, seen = new Set()) {
+  const out = [];
+  folders().filter(f => parentOf(f) === parentId).sort(byName).forEach(f => {
+    if (seen.has(f.id) || depth > 20) return;
+    out.push({ f, depth });
+    out.push(...folderTree(f.id, depth + 1, new Set(seen).add(f.id)));
+  });
+  return out;
+}
+const countPrompts = folderId => prompts().filter(p => insideFolder(p, folderId)).length;
+
+let toastTimer;
+function toast(msg) {
+  const t = $("toast");
+  t.textContent = msg;
+  if (t.showPopover) { if (!t.hasAttribute("popover")) t.setAttribute("popover", "manual"); try { t.hidePopover(); } catch {} try { t.showPopover(); } catch {} }
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.classList.remove("show"); try { t.hidePopover?.(); } catch {} }, 2600);
+}
+
+async function run(fn, okMsg) {
+  try { await fn(); if (okMsg) toast(okMsg); return true; }
+  catch (e) { console.error(e); toast("Não foi possível salvar. Verifique sua conexão."); return false; }
+}
+async function commitOps(ops) {
+  for (let i = 0; i < ops.length; i += 400) {
+    const b = writeBatch(db);
+    ops.slice(i, i + 400).forEach(op => op(b));
+    await b.commit();
+  }
+}
+
+async function writeClipboard(text) {
+  try { await navigator.clipboard.writeText(text); return true; }
+  catch {
+    const ta = document.createElement("textarea");
+    ta.value = text; ta.setAttribute("readonly", "");
+    ta.style.cssText = "position:fixed;opacity:0;top:0;left:0";
+    document.body.append(ta); ta.select();
+    let ok = false;
+    try { ok = document.execCommand("copy"); } catch {}
+    ta.remove();
+    return ok;
+  }
+}
+
+/* ================= JANELAS GENÉRICAS ================= */
+function ask({ title, text = "", input = false, value = "", buttons }) {
+  return new Promise(resolve => {
+    const dlg = $("ask"), inp = $("askInput"), host = $("askBtns");
+    $("askTitle").textContent = title;
+    $("askText").textContent = text;
+    $("askText").hidden = !text;
+    inp.hidden = !input;
+    inp.value = value;
+    host.innerHTML = "";
+    let done = false;
+    const finish = v => { if (done) return; done = true; dlg.close(); resolve(v); };
+    (buttons || [{ label: "Cancelar", value: null }, { label: "OK", value: true, cls: "primary" }]).forEach(b => {
+      const el = document.createElement("button");
+      el.type = "button";
+      el.className = "btn " + (b.cls || "");
+      el.textContent = b.label;
+      el.onclick = () => finish(b.value === true && input ? inp.value : b.value);
+      host.append(el);
+    });
+    inp.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); finish(inp.value); } };
+    dlg.onclose = () => finish(null);
+    dlg.showModal();
+    if (input) { inp.focus(); inp.select(); }
+  });
+}
+const confirmBox = (title, text, ok = "Confirmar", danger = false) =>
+  ask({ title, text, buttons: [{ label: "Cancelar", value: null }, { label: ok, value: true, cls: danger ? "danger-solid" : "primary" }] });
+const promptBox = (title, value = "", ok = "Salvar") =>
+  ask({ title, input: true, value, buttons: [{ label: "Cancelar", value: null }, { label: ok, value: true, cls: "primary" }] });
+
+function pickFolder(title, exclude = new Set(), currentId) {
+  return new Promise(resolve => {
+    const dlg = $("picker"), host = $("pickerList");
+    $("pickerTitle").textContent = title;
+    const opts = [{ id: null, label: "Início", depth: 0 },
+      ...folderTree().filter(({ f }) => !exclude.has(f.id)).map(({ f, depth }) => ({ id: f.id, label: f.title, depth: depth + 1 }))];
+    host.innerHTML = opts.map((o, k) => `
+      <button type="button" class="pick${o.id === currentId ? " current" : ""}" data-k="${k}" style="padding-left:${12 + o.depth * 18}px">
+        ${o.id ? I.folder : I.home}<span>${esc(o.label)}</span>${o.id === currentId ? "<small>atual</small>" : ""}
+      </button>`).join("");
+    let done = false;
+    const finish = v => { if (done) return; done = true; dlg.close(); resolve(v); };
+    host.onclick = e => { const b = e.target.closest("[data-k]"); if (b) finish(opts[+b.dataset.k].id); };
+    $("pickerCancel").onclick = () => finish(undefined);
+    dlg.onclose = () => finish(undefined);
+    dlg.showModal();
+  });
+}
+
+// fechar janelas ao tocar fora
+document.querySelectorAll("dialog").forEach(dlg => {
+  dlg.addEventListener("click", e => {
+    if (e.target !== dlg) return;
+    if (dlg === editor) closeEditor(); else dlg.close();
+  });
+});
+
+/* ================= MENU ⋯ ================= */
+function openMenu(anchor, items) {
+  if (!menu.hidden && menuAnchor === anchor) return closeMenu();
+  menu.innerHTML = "";
+  items.forEach(it => {
+    const b = document.createElement("button");
+    b.innerHTML = (I[it.icon] || "") + `<span>${esc(it.label)}</span>`;
+    if (it.danger) b.className = "danger";
+    b.onclick = () => { closeMenu(); it.action(); };
+    menu.append(b);
+  });
+  menu.hidden = false;
+  menuAnchor = anchor;
+  const r = anchor.getBoundingClientRect();
+  const mw = menu.offsetWidth, mh = menu.offsetHeight;
+  const left = Math.max(8, Math.min(r.right - mw, innerWidth - mw - 8));
+  let top = r.bottom + 6;
+  if (top + mh > innerHeight - 8) top = Math.max(8, r.top - mh - 6);
+  menu.style.left = left + "px";
+  menu.style.top = top + "px";
+}
+function closeMenu() { menu.hidden = true; menuAnchor = null; }
+document.addEventListener("click", e => {
+  if (menu.hidden) return;
+  if (e.target.closest(".menu,[data-more-prompt],[data-more-folder],#fab")) return;
+  closeMenu();
+});
+addEventListener("scroll", closeMenu, true);
+addEventListener("resize", closeMenu);
+
+/* ================= NAVEGAÇÃO ================= */
+function go(folderId, v = "folder", push = true) {
+  view = v;
+  currentFolder = v === "fav" ? null : folderId;
+  $("search").value = "";
+  selected.clear();
+  closeMenu();
+  if (push) history.pushState({ f: currentFolder, v }, "");
+  render();
+  scrollTo(0, 0);
+}
+addEventListener("popstate", e => {
+  const s = e.state || {};
+  go(s.f ?? null, s.v || "folder", false);
+});
+function goBack() {
+  if (query()) { $("search").value = ""; return render(); }
+  if (view === "fav") return go(null);
+  if (currentFolder) go(parentOf(getItem(currentFolder)));
+}
+
+/* ================= RENDERIZAÇÃO ================= */
+function renderTree() {
+  const favCount = prompts().filter(p => p.favorite).length;
+  const searching = !!query();
+  const isActive = (id, v = "folder") => !searching && view === v && (v === "fav" || currentFolder === id);
+  let h = `<button class="nav-item${isActive(null) ? " active" : ""}" data-nav="">${I.home}<span class="label">Início</span></button>`;
+  if (favCount) h += `<button class="nav-item${isActive(null, "fav") ? " active" : ""}" data-nav-fav>${I.star}<span class="label">Favoritos</span><span class="count">${favCount}</span></button>`;
+  const tree = folderTree();
+  h += `<div class="nav-head">Pastas</div>`;
+  h += tree.length
+    ? tree.map(({ f, depth }) => `<button class="nav-item${isActive(f.id) ? " active" : ""}" data-nav="${esc(f.id)}" style="padding-left:${10 + depth * 14}px">${I.folder}<span class="label">${esc(f.title)}</span></button>`).join("")
+    : `<p class="nav-empty">Nenhuma pasta ainda.</p>`;
+  $("tree").innerHTML = h;
+}
+
+function folderRow(f, showPath) {
+  const n = countPrompts(f.id);
+  return `<div class="row folder" data-open="${esc(f.id)}" tabindex="0">
+    ${I.folder}
+    <div class="main" style="padding-left:0"><span class="title">${esc(f.title)}</span>${showPath ? `<span class="sub">${esc(pathOf(parentOf(f)))}</span>` : ""}</div>
+    <span class="count">${n || ""}</span>
+    <button class="icon-btn" data-more-folder="${esc(f.id)}" aria-label="Mais opções">${I.more}</button>
+  </div>`;
+}
+function promptRow(p, showPath) {
+  const id = esc(p.id);
+  const sel = selected.has(p.id);
+  const done = copiedId === p.id;
+  return `<div class="row${sel ? " selected" : ""}">
+    <label class="chk"><input type="checkbox" data-sel="${id}" ${sel ? "checked" : ""} aria-label="Selecionar ${esc(p.title)}"></label>
+    <button class="main" data-edit="${id}">
+      <span class="title">${p.favorite ? `<span class="fav-mark">${I.starFill}</span>` : ""}${esc(p.title)}</span>
+      ${showPath ? `<span class="sub">${esc(pathOf(parentOf(p)))}</span>` : ""}
+    </button>
+    <button class="copy${done ? " done" : ""}" data-copy="${id}">${done ? I.check + "<span>Copiado</span>" : I.copy + "<span>Copiar</span>"}</button>
+    <button class="icon-btn" data-more-prompt="${id}" aria-label="Mais opções">${I.more}</button>
+  </div>`;
+}
+
 function render() {
   if (!user) return;
+  if (currentFolder && !getItem(currentFolder)) currentFolder = null;
+  for (const id of selected) if (!getItem(id)) selected.delete(id);
+
+  const q = query();
+  const ql = q.toLocaleLowerCase("pt-BR");
+  let title, crumbs = [], folderList = [], promptList = [], showPath = false, favRow = false, empty;
+
+  if (q) {
+    title = `Resultados para “${q}”`;
+    folderList = folders().filter(f => f.title.toLocaleLowerCase("pt-BR").includes(ql)).sort(byName);
+    promptList = prompts().filter(p => `${p.title} ${p.content}`.toLocaleLowerCase("pt-BR").includes(ql));
+    showPath = true;
+    empty = `<strong>Nada encontrado</strong>Tente outra palavra.`;
+  } else if (view === "fav") {
+    title = "Favoritos";
+    crumbs = [{ id: null, label: "Início" }];
+    promptList = prompts().filter(p => p.favorite);
+    showPath = true;
+    empty = `<strong>Nenhum favorito ainda</strong>Use o menu ⋯ de um prompt para favoritar.`;
+  } else {
+    const ch = chain(currentFolder);
+    title = currentFolder ? ch.at(-1).title : "Início";
+    if (currentFolder) crumbs = [{ id: null, label: "Início" }, ...ch.slice(0, -1).map(f => ({ id: f.id, label: f.title }))];
+    folderList = folders().filter(f => parentOf(f) === currentFolder).sort(byName);
+    promptList = prompts().filter(p => parentOf(p) === currentFolder);
+    favRow = !currentFolder && prompts().some(p => p.favorite);
+    empty = currentFolder
+      ? `<strong>Pasta vazia</strong>Toque em + para adicionar um prompt ou subpasta aqui.`
+      : `<strong>Nada por aqui ainda</strong>Toque em + para criar sua primeira pasta ou prompt.`;
+  }
+  promptList.sort((a, b) => recency(b) - recency(a));
+  visiblePromptIds = promptList.map(p => p.id);
+
   renderTree();
-  renderBreadcrumb();
-  const query = $("search").value.trim().toLocaleLowerCase("pt-BR");
-  let list = prompts().filter(p => {
-    if (showFavorites && !p.favorite) return false;
-    if (query) return (p.title+" "+p.content).toLocaleLowerCase("pt-BR").includes(query);
-    if (showFavorites) return true;
-    return currentFolder
-      ? parentOf(p) === currentFolder
-      : !parentOf(p);
-  });
-  list.sort((a,b) => a.title.localeCompare(b.title));
-  const folderList = query || showFavorites ? [] : folders()
-    .filter(f => parentOf(f) === currentFolder)
-    .sort((a,b) => a.title.localeCompare(b.title));
-  const host = $("items");
-  const folderHTML = folderList.map(f => `
-    <article class="item">
-      <div class="item-top"><h3>📁 ${escapeHTML(f.title)}</h3></div>
-      <p>Subpastas e prompts organizados aqui.</p>
-      <div class="item-actions">
-        <button data-open="${escapeHTML(f.id)}">Abrir pasta</button>
-        <button data-rename-folder="${escapeHTML(f.id)}">Renomear</button>
-        <button data-delete-folder="${escapeHTML(f.id)}" class="danger">Excluir</button>
-      </div>
-    </article>`).join("");
-  const promptHTML = list.map(p => `
-    <article class="item">
-      <div style="margin-bottom:10px">
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-          <input
-            type="checkbox"
-            data-select-prompt="${escapeHTML(p.id)}"
-            ${selectedPromptIds.has(p.id) ? "checked" : ""}
-            style="width:auto"
-          >
-          Selecionar
-        </label>
-      </div>
-      <div class="item-top">
-        <h3>${escapeHTML(p.title)}</h3>
-        <button data-fav="${escapeHTML(p.id)}" title="Favoritar" class="star">${p.favorite ? "★" : "☆"}</button>
-      </div>
-      <p>${escapeHTML(p.content)}</p>
-      <div class="item-actions">
-        <button data-copy="${escapeHTML(p.id)}">Copiar</button>
-        <button data-edit="${escapeHTML(p.id)}">Editar</button>
-        <button data-move="${escapeHTML(p.id)}">Mover</button>
-        <button data-delete="${escapeHTML(p.id)}" class="danger">Excluir</button>
-      </div>
-    </article>`).join("");
-  host.innerHTML = folderHTML + promptHTML ||
-    '<div class="empty">Nada por aqui ainda.<br><br>Crie uma pasta ou adicione seu primeiro prompt.</div>';
- host.querySelectorAll("[data-select-prompt]").forEach(input => {
-  input.onchange = () => {
-    const id = input.dataset.selectPrompt;
+  $("crumbs").innerHTML = crumbs.map(c => `<button data-crumb="${esc(c.id || "")}">${esc(c.label)}</button><span>›</span>`).join("");
+  $("crumbs").hidden = !crumbs.length;
+  $("pageTitle").textContent = title;
+  $("backBtn").hidden = !(q || view === "fav" || currentFolder);
 
-    if (input.checked) {
-      selectedPromptIds.add(id);
-    } else {
-      selectedPromptIds.delete(id);
-    }
+  let h = "";
+  if (favRow || folderList.length) {
+    h += `<div class="list">`;
+    if (favRow) h += `<div class="row folder" data-fav-view tabindex="0"><span class="fav-mark" style="margin:0">${I.starFill}</span><div class="main" style="padding-left:0"><span class="title">Favoritos</span></div><span class="count">${prompts().filter(p => p.favorite).length}</span><span style="width:38px"></span></div>`;
+    h += folderList.map(f => folderRow(f, q && parentOf(f))).join("");
+    h += `</div>`;
+  }
+  if (promptList.length) h += `<div class="list">${promptList.map(p => promptRow(p, showPath)).join("")}</div>`;
+  if (!h) h = `<div class="empty">${empty}</div>`;
+  $("content").innerHTML = h;
 
-    updateBulkMoveButton();
-  };
-});
-
-updateBulkMoveButton();
-
-  host.querySelectorAll("[data-open]").forEach(b => b.onclick = () => {
-    currentFolder = b.dataset.open;
-    showFavorites = false;
-    $("search").value = "";
-    render();
-  });
-  host.querySelectorAll("[data-fav]").forEach(b => b.onclick = async () => {
-    const p = getItem(b.dataset.fav);
-    if (p) await safe(() => updateDoc(itemRef(p.id), {favorite: !p.favorite, updatedAt: serverTimestamp()}));
-  });
-  host.querySelectorAll("[data-copy]").forEach(b => b.onclick = async () => {
-    const p = getItem(b.dataset.copy);
-    if (!p) return;
-    try {
-      await navigator.clipboard.writeText(p.content);
-      b.textContent = "Copiado!";
-      setTimeout(() => { if (b.isConnected) b.textContent = "Copiar"; }, 1300);
-    } catch {
-      window.prompt("Copie seu prompt:", p.content);
-    }
-  });
-  host.querySelectorAll("[data-edit]").forEach(b => b.onclick = () => openEditor(getItem(b.dataset.edit)));
-  host.querySelectorAll("[data-delete]").forEach(b => b.onclick = async () => {
-    const p = getItem(b.dataset.delete);
-    if (p && confirm(`Excluir o prompt "${p.title}"?`))
-      await safe(() => deleteDoc(itemRef(p.id)));
-  });
-  host.querySelectorAll("[data-move]").forEach(b => b.onclick = async () => {
-    const p = getItem(b.dataset.move);
-    if (!p) return;
-    const choice = window.prompt(
-      "Digite o nome da pasta de destino ou deixe vazio para Início:\n" +
-      folders().map(f => `${f.title} [${f.id}]`).join("\n"),
-      folderName(parentOf(p))
-    );
-    if (choice === null) return;
-    const target = choice.trim() ? folders().find(f => f.title.toLowerCase() === choice.trim().toLowerCase()) : null;
-    if (choice.trim() && !target) return alert("Pasta não encontrada. Tente novamente.");
-    await safe(() => updateDoc(itemRef(p.id), {parentId: target?.id || null, updatedAt: serverTimestamp()}));
-  });
-  host.querySelectorAll("[data-rename-folder]").forEach(b => b.onclick = async () => {
-    const f = getItem(b.dataset.renameFolder);
-    if (!f) return;
-    const name = prompt("Novo nome da pasta:", f.title);
-    if (name?.trim()) await safe(() => updateDoc(itemRef(f.id), {title:name.trim(), updatedAt:serverTimestamp()}));
-  });
-  host.querySelectorAll("[data-delete-folder]").forEach(b => b.onclick = async () => {
-  const f = getItem(b.dataset.deleteFolder);
-  if (!f) return;
-
-  const folderId = f.id;
-  const parentId = parentOf(f);
-
-  const toDelete = records.filter(item =>
-    item.id === folderId || insideFolder(item, folderId)
-  );
-
-  const promptCount = toDelete.filter(item => item.type === "prompt").length;
-  const subfolderCount = toDelete.filter(item => item.type === "folder").length - 1;
-
-  const message =
-    `Excluir a pasta "${f.title}" e todo o seu conteúdo?\n\n` +
-    `• ${promptCount} prompt(s)\n` +
-    `• ${Math.max(0, subfolderCount)} subpasta(s)\n\n` +
-    `Essa ação é permanente!`;
-
-  if (!confirm(message)) return;
-
-  await safe(async () => {
-    await Promise.all(
-      toDelete.map(item => deleteDoc(itemRef(item.id)))
-    );
-
-    const current = getItem(currentFolder);
-    if (
-      currentFolder === folderId ||
-      (current && insideFolder(current, folderId))
-    ) {
-      currentFolder = parentId;
-    }
-  });
-});
+  updateSelbar();
 }
-async function safe(action) {
-  if (busy) return;
-  busy = true;
-  status.textContent = "Salvando...";
-  try {
-    await action();
-  } catch (e) {
-    console.error(e);
-    alert("Não foi possível salvar. Verifique sua conexão e as regras do Firestore.");
-  } finally {
-    busy = false;
-    if (user) status.textContent = "Sincronização ativa";
+
+function updateSelbar() {
+  const n = selected.size;
+  $("selbar").hidden = !n;
+  $("fab").hidden = !!n;
+  if (!n) return;
+  $("selCount").innerHTML = `${n}<span class="long"> ${n === 1 ? "selecionado" : "selecionados"}</span>`;
+  const all = visiblePromptIds.length && visiblePromptIds.every(id => selected.has(id));
+  $("selAll").innerHTML = all
+    ? `<span class="long">Desmarcar todos</span><span class="short">Nenhum</span>`
+    : `<span class="long">Selecionar todos</span><span class="short">Todos</span>`;
+}
+
+/* ================= AÇÕES ================= */
+async function copyPrompt(id) {
+  const p = getItem(id);
+  if (!p) return;
+  if (!(await writeClipboard(p.content))) return toast("Não foi possível copiar.");
+  copiedId = id;
+  clearTimeout(copiedTimer);
+  copiedTimer = setTimeout(() => { copiedId = null; render(); }, 1500);
+  render();
+  updateDoc(itemRef(id), { lastUsedAt: serverTimestamp() }).catch(console.error);
+}
+
+function promptMenu(id, anchor) {
+  const p = getItem(id);
+  if (!p) return;
+  openMenu(anchor, [
+    { icon: "edit", label: "Editar", action: () => openEditor(p) },
+    { icon: "star", label: p.favorite ? "Remover dos favoritos" : "Adicionar aos favoritos",
+      action: () => run(() => updateDoc(itemRef(id), { favorite: !p.favorite }), p.favorite ? "Removido dos favoritos" : "Adicionado aos favoritos") },
+    { icon: "move", label: "Mover para…", action: () => movePrompts([id]) },
+    { icon: "trash", label: "Excluir", danger: true, action: () => deletePrompts([id]) }
+  ]);
+}
+function folderMenu(id, anchor) {
+  openMenu(anchor, [
+    { icon: "edit", label: "Renomear", action: () => renameFolder(id) },
+    { icon: "move", label: "Mover para…", action: () => moveFolder(id) },
+    { icon: "trash", label: "Excluir", danger: true, action: () => deleteFolder(id) }
+  ]);
+}
+
+async function movePrompts(ids) {
+  const list = ids.map(getItem).filter(Boolean);
+  if (!list.length) return;
+  const dest = await pickFolder(
+    list.length === 1 ? `Mover “${list[0].title}”` : `Mover ${list.length} prompts`,
+    new Set(), list.length === 1 ? parentOf(list[0]) : undefined
+  );
+  if (dest === undefined) return;
+  const todo = list.filter(p => parentOf(p) !== dest);
+  if (!todo.length) return toast("Já está nessa pasta.");
+  const destName = pathOf(dest);
+  const ok = await run(() => commitOps(todo.map(p => b => b.update(itemRef(p.id), { parentId: dest }))));
+  if (ok) {
+    ids.forEach(id => selected.delete(id));
+    render();
+    toast(`${todo.length === 1 ? "Movido" : `${todo.length} prompts movidos`} para ${destName}`);
   }
 }
+
+async function deletePrompts(ids) {
+  const list = ids.map(getItem).filter(Boolean);
+  if (!list.length) return;
+  const ok = await confirmBox(
+    list.length === 1 ? `Excluir “${list[0].title}”?` : `Excluir ${list.length} prompts?`,
+    "Essa ação não pode ser desfeita.", "Excluir", true
+  );
+  if (!ok) return;
+  const done = await run(() => commitOps(list.map(p => b => b.delete(itemRef(p.id)))),
+    list.length === 1 ? "Prompt excluído" : `${list.length} prompts excluídos`);
+  if (done) { ids.forEach(id => selected.delete(id)); render(); }
+}
+
+async function newFolder() {
+  const parent = view === "folder" && !query() ? currentFolder : null;
+  const name = await promptBox(parent ? `Nova pasta em “${getItem(parent)?.title}”` : "Nova pasta", "", "Criar");
+  if (!name?.trim()) return;
+  run(() => addDoc(itemsRef(), {
+    type: "folder", title: name.trim(), content: "", parentId: parent, favorite: false,
+    createdAt: serverTimestamp(), updatedAt: serverTimestamp()
+  }), "Pasta criada");
+}
+
+async function renameFolder(id) {
+  const f = getItem(id);
+  if (!f) return;
+  const name = await promptBox("Renomear pasta", f.title);
+  if (!name?.trim() || name.trim() === f.title) return;
+  run(() => updateDoc(itemRef(id), { title: name.trim(), updatedAt: serverTimestamp() }), "Pasta renomeada");
+}
+
+async function moveFolder(id) {
+  const f = getItem(id);
+  if (!f) return;
+  const exclude = new Set([id, ...folders().filter(x => insideFolder(x, id)).map(x => x.id)]);
+  const dest = await pickFolder(`Mover pasta “${f.title}”`, exclude, parentOf(f));
+  if (dest === undefined || dest === parentOf(f)) return;
+  run(() => updateDoc(itemRef(id), { parentId: dest }), `Pasta movida para ${pathOf(dest)}`);
+}
+
+async function deleteFolder(id) {
+  const f = getItem(id);
+  if (!f) return;
+  const all = records.filter(x => x.id === id || insideFolder(x, id));
+  const np = all.filter(x => x.type === "prompt").length;
+  const nf = all.length - np - 1;
+  const parts = [];
+  if (np) parts.push(plural(np, "prompt", "prompts"));
+  if (nf) parts.push(plural(nf, "subpasta", "subpastas"));
+  const ok = await confirmBox(`Excluir a pasta “${f.title}”?`,
+    (parts.length ? `Também serão excluídos: ${parts.join(" e ")}.\n` : "") + "Essa ação não pode ser desfeita.",
+    "Excluir", true);
+  if (!ok) return;
+  if (currentFolder === id || (currentFolder && insideFolder(getItem(currentFolder), id))) currentFolder = parentOf(f);
+  await run(() => commitOps(all.map(x => b => b.delete(itemRef(x.id)))), "Pasta excluída");
+}
+
+/* ================= EDITOR ================= */
 function openEditor(p = null) {
   editingId = p?.id || null;
-  $("editorHeading").textContent = p ? "Editar prompt" : "Novo prompt";
+  $("edHeading").textContent = p ? "Editar prompt" : "Novo prompt";
   $("title").value = p?.title || "";
-  $("content").value = p?.content || "";
-  const destination = $("destination");
-  destination.innerHTML = '<option value="">Início</option>' +
-    folders().sort((a,b) => a.title.localeCompare(b.title))
-      .map(f => `<option value="${escapeHTML(f.id)}">${escapeHTML(folderName(f.parentId ? f.parentId : null) === "Início" ? f.title : getPath(f))}</option>`).join("");
-  destination.value = p ? (p.parentId || "") : (currentFolder || "");
+  $("content-field").value = p?.content || "";
+  const dest = $("destination");
+  dest.innerHTML = '<option value="">Início</option>' +
+    folderTree().map(({ f }) => `<option value="${esc(f.id)}">${esc(pathOf(f.id))}</option>`).join("");
+  dest.value = p ? (parentOf(p) || "") : (view === "folder" && !query() ? (currentFolder || "") : "");
+  $("edCopy").hidden = !p;
+  $("edCopy").querySelector("span").textContent = "Copiar";
   editor.showModal();
-  $("title").focus();
+  $("content-field").scrollTop = 0;
+  if (!p) $("title").focus();
+  else $("edClose").focus();
 }
-function getPath(f) {
-  const chain = [f.title];
-  let id = parentOf(f);
-  const seen = new Set([f.id]);
-  while (id && !seen.has(id)) {
-    seen.add(id);
-    const parent = getItem(id);
-    if (!parent) break;
-    chain.unshift(parent.title);
-    id = parentOf(parent);
+function editorDirty() {
+  const p = editingId ? getItem(editingId) : null;
+  return $("title").value !== (p?.title || "") || $("content-field").value !== (p?.content || "");
+}
+async function closeEditor() {
+  if (editorDirty()) {
+    const ok = await confirmBox("Descartar alterações?", "O que você escreveu não será salvo.", "Descartar", true);
+    if (!ok) return;
   }
-  return chain.join(" / ");
+  editor.close();
 }
+editor.addEventListener("cancel", e => { e.preventDefault(); closeEditor(); });
+$("edClose").onclick = closeEditor;
+$("edCancel").onclick = closeEditor;
+$("edCopy").onclick = async () => {
+  if (!(await writeClipboard($("content-field").value))) return toast("Não foi possível copiar.");
+  $("edCopy").querySelector("span").textContent = "Copiado ✓";
+  setTimeout(() => { $("edCopy").querySelector("span").textContent = "Copiar"; }, 1400);
+  if (editingId) updateDoc(itemRef(editingId), { lastUsedAt: serverTimestamp() }).catch(console.error);
+};
+$("content-field").addEventListener("keydown", e => {
+  if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); $("editorForm").requestSubmit(); }
+});
+$("editorForm").onsubmit = async e => {
+  e.preventDefault();
+  if (!user) return;
+  const title = $("title").value.trim();
+  const content = $("content-field").value.trim();
+  if (!title || !content) return toast("Preencha o título e o prompt.");
+  const parentId = $("destination").value || null;
+  const data = { type: "prompt", title, content, parentId, updatedAt: serverTimestamp(), lastUsedAt: serverTimestamp() };
+  const btn = $("savePrompt");
+  btn.disabled = true;
+  const wasEditing = !!editingId;
+  const ok = await run(() => editingId
+    ? updateDoc(itemRef(editingId), data)
+    : addDoc(itemsRef(), { ...data, favorite: false, createdAt: serverTimestamp() }));
+  btn.disabled = false;
+  if (ok) { editor.close(); toast(wasEditing ? "Prompt salvo" : "Prompt criado"); }
+};
 
+/* ================= EVENTOS DA TELA ================= */
+$("content").addEventListener("click", e => {
+  const t = e.target;
+  let el;
+  if ((el = t.closest("[data-more-prompt]"))) return promptMenu(el.dataset.morePrompt, el);
+  if ((el = t.closest("[data-more-folder]"))) return folderMenu(el.dataset.moreFolder, el);
+  if ((el = t.closest("[data-copy]"))) return copyPrompt(el.dataset.copy);
+  if ((el = t.closest("[data-edit]"))) return openEditor(getItem(el.dataset.edit));
+  if (t.closest(".chk")) return;
+  if (t.closest("[data-fav-view]")) return go(null, "fav");
+  if ((el = t.closest("[data-open]"))) return go(el.dataset.open);
+});
+$("content").addEventListener("keydown", e => {
+  if (e.key === "Enter" && e.target.matches("[data-open],[data-fav-view]")) e.target.click();
+});
+$("content").addEventListener("change", e => {
+  const id = e.target.dataset?.sel;
+  if (!id) return;
+  e.target.checked ? selected.add(id) : selected.delete(id);
+  e.target.closest(".row").classList.toggle("selected", e.target.checked);
+  updateSelbar();
+});
+
+$("tree").addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  if (b.hasAttribute("data-nav-fav")) return go(null, "fav");
+  go(b.dataset.nav || null);
+});
+$("crumbs").addEventListener("click", e => {
+  const b = e.target.closest("[data-crumb]");
+  if (b) go(b.dataset.crumb || null);
+});
+$("backBtn").onclick = goBack;
+$("brandBtn").onclick = () => go(null);
+
+$("search").addEventListener("input", render);
+$("search").addEventListener("keydown", e => {
+  if (e.key === "Escape") { $("search").value = ""; render(); $("search").blur(); }
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && !menu.hidden) closeMenu();
+  if (e.key === "/" && !e.target.closest("input,textarea,select") && !document.querySelector("dialog[open]")) {
+    e.preventDefault(); $("search").focus();
+  }
+});
+
+$("fab").onclick = () => openMenu($("fab"), [
+  { icon: "doc", label: "Novo prompt", action: () => openEditor() },
+  { icon: "folder", label: "Nova pasta", action: newFolder }
+]);
+
+$("selClear").onclick = () => { selected.clear(); render(); };
+$("selAll").onclick = () => {
+  const all = visiblePromptIds.every(id => selected.has(id));
+  visiblePromptIds.forEach(id => all ? selected.delete(id) : selected.add(id));
+  render();
+};
+$("selMove").onclick = () => movePrompts([...selected]);
+$("selDelete").onclick = () => deletePrompts([...selected]);
+
+$("settingsBtn").onclick = () => $("settings").showModal();
+$("settingsClose").onclick = () => $("settings").close();
+$("logoutBtn").onclick = async () => {
+  $("settings").close();
+  if (await confirmBox("Sair da conta?", "Você pode entrar de novo quando quiser.", "Sair")) signOut(auth);
+};
+
+/* ================= LOGIN ================= */
 $("loginBtn").onclick = async () => {
   $("loginError").textContent = "";
   try {
@@ -488,98 +895,39 @@ $("loginBtn").onclick = async () => {
     if (e.code === "auth/popup-blocked" || e.code === "auth/operation-not-supported-in-this-environment") {
       try { await signInWithRedirect(auth, provider); }
       catch (err) { $("loginError").textContent = err.message; }
-    } else {
+    } else if (e.code !== "auth/popup-closed-by-user" && e.code !== "auth/cancelled-popup-request") {
       $("loginError").textContent = e.message;
     }
   }
 };
 
-$("logoutBtn").onclick = () => signOut(auth);
-$("rootBtn").onclick = () => { currentFolder = null; showFavorites = false; $("search").value = ""; render(); };
-$("newFolder").onclick = async () => {
-  const title = prompt("Nome da nova pasta:");
-  if (!title?.trim() || !user) return;
-  await safe(() => addDoc(itemsRef(), {
-    type:"folder", title:title.trim(), content:"",
-    parentId:currentFolder || null, favorite:false,
-    createdAt:serverTimestamp(), updatedAt:serverTimestamp()
-  }));
-};
-$("newPrompt").onclick = () => openEditor();
-$("favoritesBtn").onclick = () => {
-  showFavorites = !showFavorites;
-  currentFolder = null;
-  $("search").value = "";
-  $("favoritesBtn").textContent = showFavorites ? "★ Ver todos" : "★ Favoritos";
-  render();
-};
-$("refreshBtn").onclick = () => render();
-$("search").addEventListener("input", () => {
-  if ($("search").value.trim()) {
-    currentFolder = null;
-    showFavorites = false;
-  }
-  render();
-});
-$("cancelEdit").onclick = () => editor.close();
-$("editorForm").onsubmit = async e => {
-  e.preventDefault();
-  if (!user) return;
-  const title = $("title").value.trim();
-  const content = $("content").value.trim();
-  const parentId = $("destination").value || null;
-  if (!title || !content) return;
-  const data = {type:"prompt", title, content, parentId, updatedAt:serverTimestamp()};
-  const button = $("savePrompt");
-  button.disabled = true;
-  try {
-    if (editingId) {
-      await updateDoc(itemRef(editingId), data);
-    } else {
-      await addDoc(itemsRef(), {...data, favorite:false, createdAt:serverTimestamp()});
-    }
-    editor.close();
-  } catch (err) {
-    console.error(err);
-    alert("Erro ao salvar. Confira sua conexão e as regras do banco.");
-  } finally {
-    button.disabled = false;
-  }
-};
-
 onAuthStateChanged(auth, currentUser => {
   user = currentUser;
+  if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+  document.body.className = user ? "in" : "out";
 
-  if (unsubscribe) {
-    unsubscribe();
-    unsubscribe = null;
-  }
-
-  $("authLoading").style.display = "none";
-  document.body.classList.remove("auth-loading");
-  document.querySelector("header").style.display = "flex";
-
-  login.style.display = user ? "none" : "block";
-  appView.style.display = user ? "block" : "none";
-   
   if (!user) {
     records = [];
-    $("items").innerHTML = "";
+    selected.clear();
+    $("content").innerHTML = "";
     $("tree").innerHTML = "";
-    status.textContent = "Desconectado";
     return;
   }
 
-  status.textContent = "Conectando...";
+  $("acctName").textContent = user.displayName || "Sua conta";
+  $("acctEmail").textContent = user.email || "";
+  $("syncLine").textContent = "Conectando…";
+  currentFolder = null; view = "folder";
+  history.replaceState({ f: null, v: "folder" }, "");
 
   unsubscribe = onSnapshot(itemsRef(), snapshot => {
-    records = snapshot.docs.map(d => ({id:d.id, ...d.data()}));
-    status.textContent = "Sincronização ativa";
+    records = snapshot.docs.map(d => ({ id: d.id, ...d.data({ serverTimestamps: "estimate" }) }));
+    $("syncLine").textContent = "Sincronização ativa";
     render();
   }, error => {
     console.error(error);
-    status.textContent = "Erro de sincronização";
-    alert("Não foi possível carregar seus prompts. Verifique as regras do Firestore.");
+    $("syncLine").textContent = "Erro de sincronização";
+    toast("Não foi possível carregar seus prompts.");
   });
 });
 
@@ -587,372 +935,130 @@ getRedirectResult(auth).catch(e => {
   console.error(e);
   $("loginError").textContent = "Erro ao concluir login: " + e.message;
 });
-  // ===== EXPORTAR E IMPORTAR BACKUP =====
+
+/* ================= BACKUP ================= */
+const toISO = v => v?.toDate ? v.toDate().toISOString() : v ?? null;
 
 $("exportBtn").onclick = () => {
-  if (!user) {
-    alert("Entre na sua conta antes de exportar.");
-    return;
-  }
-
+  if (!user) return;
   const backup = {
     app: "Meu Gerenciador de Prompts",
     version: 1,
     exportedAt: new Date().toISOString(),
     items: records.map(({ id, ...item }) => ({
-      id,
-      ...item,
-      createdAt: item.createdAt?.toDate
-        ? item.createdAt.toDate().toISOString()
-        : item.createdAt ?? null,
-      updatedAt: item.updatedAt?.toDate
-        ? item.updatedAt.toDate().toISOString()
-        : item.updatedAt ?? null
+      id, ...item,
+      createdAt: toISO(item.createdAt),
+      updatedAt: toISO(item.updatedAt),
+      ...(item.lastUsedAt ? { lastUsedAt: toISO(item.lastUsedAt) } : {})
     }))
   };
-
-  const blob = new Blob(
-    [JSON.stringify(backup, null, 2)],
-    { type: "application/json" }
-  );
-
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "backup-meus-prompts.json";
-  link.click();
-
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `backup-meus-prompts-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
-  $("status").textContent = "Backup baixado com sucesso!";
+  toast("Backup baixado");
 };
 
 $("importBtn").onclick = () => {
-  if (!user) {
-    alert("Entre na sua conta antes de importar.");
-    return;
-  }
-
+  if (!user) return;
+  $("settings").close();
   $("importFile").click();
 };
-
-
 
 $("importFile").onchange = async event => {
   const file = event.target.files[0];
   if (!file) return;
-
   try {
     let backup = JSON.parse(await file.text());
-    let formatoSpacePrompts = false;
+    let spacePrompts = false;
 
-    // FORMATO 1: arquivo exportado do SpacePrompts
+    // Formato do SpacePrompts
     if (Array.isArray(backup)) {
-      formatoSpacePrompts = true;
-
+      spacePrompts = true;
       backup = {
         app: "Meu Gerenciador de Prompts",
         version: 1,
-       items: backup.map((item, index) => ({
-  id: String(item?.id ?? `space-${index}`),
-  type: "prompt",
-  title: item?.title,
-  content: item?.prompt,
-  parentId: null
-}))
+        items: backup.map((item, index) => ({
+          id: String(item?.id ?? `space-${index}`),
+          type: "prompt",
+          title: String(item?.title ?? "Sem título"),
+          content: String(item?.prompt ?? ""),
+          parentId: null
+        }))
       };
     }
 
-    // FORMATO 2: backup do próprio gerenciador
-    if (
-      backup.app !== "Meu Gerenciador de Prompts" ||
-      backup.version !== 1 ||
-      !Array.isArray(backup.items)
-    ) {
-      throw new Error(
-        "Formato não reconhecido. Selecione um backup do gerenciador ou um JSON exportado do SpacePrompts."
-      );
-    }
+    if (backup.app !== "Meu Gerenciador de Prompts" || backup.version !== 1 || !Array.isArray(backup.items))
+      throw new Error("Formato não reconhecido. Use um backup do gerenciador ou um JSON do SpacePrompts.");
 
     const valid = backup.items.every(item =>
-      item &&
-      typeof item.id === "string" &&
+      item && typeof item.id === "string" &&
       ["folder", "prompt"].includes(item.type) &&
-      typeof item.title === "string" &&
-      typeof item.content === "string" &&
-      (item.parentId == null ||
-        typeof item.parentId === "string")
-    );
+      typeof item.title === "string" && typeof item.content === "string" &&
+      (item.parentId == null || typeof item.parentId === "string"));
+    if (!valid) throw new Error("Existem itens inválidos no arquivo.");
 
-    if (!valid) {
-      throw new Error(
-        "Existem itens inválidos no arquivo. Confira se os títulos e conteúdos estão preenchidos corretamente."
-      );
-    }
-
-    const ids = new Set(backup.items.map(item => item.id));
-
-    if (ids.size !== backup.items.length) {
-      throw new Error("O arquivo contém IDs duplicados.");
-    }
-
-    if (backup.items.some(item =>
-      item.parentId && !ids.has(item.parentId)
-    )) {
-      throw new Error(
-        "O arquivo contém referências de pastas inválidas."
-      );
-    }
-
-    if (backup.items.length === 0) {
-      alert("O arquivo não contém nenhum prompt para importar.");
-      return;
-    }
-
-    if (!user) {
-      throw new Error("Entre na sua conta antes de importar.");
-    }
+    const ids = new Set(backup.items.map(i => i.id));
+    if (ids.size !== backup.items.length) throw new Error("O arquivo contém IDs duplicados.");
+    if (backup.items.some(i => i.parentId && !ids.has(i.parentId))) throw new Error("O arquivo contém referências de pastas inválidas.");
+    if (!backup.items.length) return toast("O arquivo está vazio.");
 
     let mode;
-
-    if (formatoSpacePrompts) {
-      // Arquivos do SpacePrompts são adicionados sem apagar os atuais.
-      const confirmed = confirm(
-        `Foram encontrados ${backup.items.length} prompts no SpacePrompts.\n\n` +
-        "Eles serão adicionados ao seu gerenciador, sem apagar os itens atuais.\n\n" +
-        "Deseja continuar?"
-      );
-
-      if (!confirmed) return;
-      mode = "2";
+    if (spacePrompts) {
+      const ok = await confirmBox(`${plural(backup.items.length, "prompt encontrado", "prompts encontrados")} no SpacePrompts`,
+        "Eles serão adicionados sem apagar o que você já tem.", "Importar");
+      if (!ok) return;
+      mode = "add";
     } else {
-      mode = prompt(
-        "Como deseja importar?\n\n" +
-        "1 = Restaurar tudo (substitui os dados atuais)\n" +
-        "2 = Adicionar ao que já existe (mantém os atuais)\n\n" +
-        "Digite 1 ou 2:"
-      );
-
-      if (mode !== "1" && mode !== "2") return;
-
-      if (mode === "1" && !confirm(
-        "ATENÇÃO: todos os prompts e pastas atuais serão substituídos.\n\n" +
-        "Você já baixou um backup atual?\n\n" +
-        "Clique OK para continuar."
-      )) {
-        return;
-      }
+      mode = await ask({
+        title: "Como deseja importar?",
+        text: `O arquivo tem ${plural(backup.items.length, "item", "itens")}.\n\n“Adicionar” mantém o que você já tem.\n“Substituir tudo” apaga os dados atuais e restaura o backup.`,
+        buttons: [
+          { label: "Cancelar", value: null },
+          { label: "Substituir tudo", value: "replace", cls: "danger" },
+          { label: "Adicionar", value: "add", cls: "primary" }
+        ]
+      });
+      if (!mode) return;
+      if (mode === "replace" && !(await confirmBox("Substituir tudo?",
+        "Todos os prompts e pastas atuais serão apagados. Recomendo exportar um backup antes.", "Substituir", true))) return;
     }
 
-    $("status").textContent = "Preparando importação...";
-
-    const currentItems = [...records];
+    toast("Importando…");
     const idMap = new Map();
+    backup.items.forEach(i => idMap.set(i.id, mode === "add" ? doc(itemsRef()).id : i.id));
 
-    if (mode === "2") {
-      backup.items.forEach(item => {
-        idMap.set(item.id, doc(itemsRef()).id);
-      });
-    } else {
-      backup.items.forEach(item => {
-        idMap.set(item.id, item.id);
-      });
-    }
-
-    const newItems = backup.items.map(item => {
-      const { id, ...originalData } = item;
-      const data = { ...originalData };
-
-      if (data.parentId) {
-        data.parentId = idMap.get(data.parentId);
-      } else {
-        data.parentId = null;
-      }
-
+    const newItems = backup.items.map(({ id, ...orig }) => {
+      const data = { ...orig, parentId: orig.parentId ? idMap.get(orig.parentId) : null };
       for (const field of ["createdAt", "updatedAt"]) {
         if (typeof data[field] === "string") {
-          const date = new Date(data[field]);
-
-          data[field] = Number.isNaN(date.getTime())
-            ? serverTimestamp()
-            : Timestamp.fromDate(date);
-        } else if (!data[field]) {
-          data[field] = serverTimestamp();
-        }
+          const d = new Date(data[field]);
+          data[field] = Number.isNaN(d.getTime()) ? serverTimestamp() : Timestamp.fromDate(d);
+        } else if (!data[field]) data[field] = serverTimestamp();
       }
-
-      return {
-        id: idMap.get(id),
-        data
-      };
+      if (typeof data.lastUsedAt === "string") {
+        const d = new Date(data.lastUsedAt);
+        if (Number.isNaN(d.getTime())) delete data.lastUsedAt; else data.lastUsedAt = Timestamp.fromDate(d);
+      }
+      return { id: idMap.get(id), data };
     });
 
-    const operations = [];
+    const ops = [];
+    if (mode === "replace") [...records].forEach(item => ops.push(b => b.delete(itemRef(item.id))));
+    newItems.forEach(item => ops.push(b => b.set(itemRef(item.id), item.data)));
+    await commitOps(ops);
 
-    if (mode === "1") {
-      currentItems.forEach(item => {
-        operations.push({
-          type: "delete",
-          id: item.id
-        });
-      });
-    }
-
-    newItems.forEach(item => {
-      operations.push({
-        type: "set",
-        id: item.id,
-        data: item.data
-      });
-    });
-
-    for (let i = 0; i < operations.length; i += 400) {
-      const batch = writeBatch(db);
-
-      for (const op of operations.slice(i, i + 400)) {
-        const ref = itemRef(op.id);
-
-        if (op.type === "delete") {
-          batch.delete(ref);
-        } else {
-          batch.set(ref, op.data);
-        }
-      }
-
-      await batch.commit();
-    }
-
-    $("status").textContent = formatoSpacePrompts
-      ? "Prompts do SpacePrompts importados!"
-      : mode === "1"
-        ? "Backup restaurado!"
-        : "Itens adicionados com sucesso!";
-
-    alert(formatoSpacePrompts
-      ? `${newItems.length} prompts do SpacePrompts foram importados!\n\nOs itens anteriores foram mantidos.`
-      : mode === "1"
-        ? "Backup restaurado com sucesso!"
-        : "Os itens do backup foram adicionados sem apagar os atuais."
-    );
-
+    toast(mode === "replace" ? "Backup restaurado" : `${plural(newItems.length, "item importado", "itens importados")}`);
   } catch (error) {
     console.error("Erro na importação:", error);
-
-    alert(
-      "Não foi possível concluir a importação.\n\n" +
-      error.message
-    );
+    await ask({ title: "Não foi possível importar", text: error.message, buttons: [{ label: "OK", value: null, cls: "primary" }] });
   } finally {
     event.target.value = "";
   }
 };
-
-$("selectAllBtn").onclick = () => {
-  document.querySelectorAll("#items [data-select-prompt]").forEach(input => {
-    selectedPromptIds.add(input.dataset.selectPrompt);
-    input.checked = true;
-  });
-
-  updateBulkMoveButton();
-};
-
-$("clearSelectionBtn").onclick = () => {
-  selectedPromptIds.clear();
-
-  document.querySelectorAll("#items [data-select-prompt]").forEach(input => {
-    input.checked = false;
-  });
-
-  updateBulkMoveButton();
-};
-
-$("moveSelectedBtn").onclick = async () => {
-  const selected = records.filter(item =>
-    item.type === "prompt" && selectedPromptIds.has(item.id)
-  );
-
-  if (selected.length === 0) {
-    alert("Selecione pelo menos um prompt para mover.");
-    return;
-  }
-
-  const folderOptions = folders().sort((a, b) =>
-    getPath(a).localeCompare(getPath(b))
-  );
-
-  const folderMenu = [
-    "0 = Início",
-    ...folderOptions.map((folder, index) =>
-      `${index + 1} = ${getPath(folder)}`
-    )
-  ].join("\n");
-
-  const answer = prompt(
-    `Mover ${selected.length} prompt(s) para qual pasta?\n\n` +
-    folderMenu +
-    "\n\nDigite o número da pasta desejada:",
-    "0"
-  );
-
-  if (answer === null) return;
-
-  const choice = answer.trim();
-
-  if (!/^\d+$/.test(choice)) {
-    alert("Digite um número válido.");
-    return;
-  }
-
-  const number = Number(choice);
-
-  if (number < 0 || number > folderOptions.length) {
-    alert("Essa opção não existe.");
-    return;
-  }
-
-  const destinationId =
-    number === 0 ? null : folderOptions[number - 1].id;
-
-  if (selected.every(p => (p.parentId || null) === destinationId)) {
-    alert("Todos os prompts selecionados já estão nessa pasta.");
-    return;
-  }
-
-  const destinationName = destinationId
-    ? getPath(getItem(destinationId))
-    : "Início";
-
-  if (!confirm(
-    `Mover ${selected.length} prompt(s) para "${destinationName}"?`
-  )) {
-    return;
-  }
-
-  await safe(async () => {
-    for (let i = 0; i < selected.length; i += 400) {
-      const batch = writeBatch(db);
-
-      for (const item of selected.slice(i, i + 400)) {
-        batch.update(itemRef(item.id), {
-          parentId: destinationId,
-          updatedAt: serverTimestamp()
-        });
-      }
-
-      await batch.commit();
-    }
-
-    const count = selected.length;
-    selectedPromptIds.clear();
-    render();
-    updateBulkMoveButton();
-
-    alert(
-      `${count} prompt(s) movido(s) para "${destinationName}" com sucesso!`
-    );
-  });
-};
-
- 
 </script>
 </body>
 </html>
