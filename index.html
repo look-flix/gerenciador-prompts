@@ -14,12 +14,14 @@
   --bg:#f6f6f4;--panel:#fff;--hover:#f0f0ec;--line:#e5e5e0;--text:#1b1b1a;--muted:#7a7a73;
   --accent:#2f6f4f;--accent-text:#fff;--accent-soft:#e4efe8;--danger:#c0392b;--fav:#d49b00;
   --shadow:0 10px 30px rgba(0,0,0,.12);color-scheme:light;
+  --note-bg:#fffbeb;--note-line:#fde68a;--note-ink:#a16207;
 }
 @media (prefers-color-scheme:dark){
   :root{
     --bg:#121212;--panel:#1a1a1a;--hover:#232323;--line:#2b2b2b;--text:#f2f2ef;--muted:#9a9a93;
     --accent:#c8ea93;--accent-text:#141414;--accent-soft:#283020;--danger:#ff8a80;--fav:#f5c542;
     --shadow:0 10px 30px rgba(0,0,0,.55);color-scheme:dark;
+    --note-bg:#29230f;--note-line:#4a3d14;--note-ink:#f5c542;
   }
 }
 *{box-sizing:border-box}
@@ -166,22 +168,37 @@ dialog.sheet{width:min(760px,calc(100% - 24px))}
 #syncLine{font-size:12px;margin:12px 0 0}
 
 /* ---------- variações ---------- */
-.vtoggle svg{transition:transform .15s}
-.vtoggle.open svg{transform:rotate(180deg)}
-.vtoggle.open{color:var(--accent)}
-.copy .badge{background:var(--accent);color:var(--accent-text);border-radius:999px;padding:0 6px;font-size:11px;line-height:17px}
-.copy.done .badge{display:none}
-.vpanel{border-top:1px solid var(--line);padding:12px 14px 14px 50px;background:var(--bg)}
-.vgroup{margin-bottom:12px}
+.vgroup{margin-bottom:14px}
 .vgroup-name{font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chip{height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--panel);font-size:13px}
 .chip:hover{border-color:var(--accent)}
 .chip.on{background:var(--accent);color:var(--accent-text);border-color:transparent;font-weight:600}
 .chip.add{color:var(--muted);border-style:dashed}
-.vfoot{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.vfoot .btn{height:36px;padding:0 14px}
-.vfoot .muted{font-size:12px}
+.bsheet .grab{display:none;width:40px;height:5px;background:var(--line);border-radius:9px;margin:-6px auto 14px}
+.bsheet h3{margin:0;font-size:18px}
+.bsheet .hint{margin:2px 0 16px}
+.vs-main{width:100%;height:50px;margin-top:6px;font-size:15px;overflow:hidden}
+.vs-main span{overflow:hidden;text-overflow:ellipsis}
+.vs-alt{width:100%;height:42px;margin-top:4px;color:var(--accent);font-weight:600;border-radius:10px}
+.vs-alt:hover{background:var(--hover)}
+.note-ind{color:var(--note-ink)}
+.note,.remind{background:var(--note-bg);border:1px solid var(--note-line);border-radius:12px;padding:10px 12px;margin-bottom:8px;font-size:14px}
+.note .d{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:600;color:var(--note-ink);margin:-4px -6px 2px 0}
+.note .acts{display:flex}
+.note .acts button{width:32px;height:32px;display:grid;place-items:center;border-radius:8px;color:var(--muted)}
+.note .acts svg{width:15px;height:15px}
+.note p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.note textarea{min-height:80px;margin-top:4px}
+.remind{margin-bottom:14px;font-size:13.5px}
+.remind b{display:block;font-size:12px;color:var(--note-ink);margin-bottom:2px}
+.remind .txt{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;overflow-wrap:anywhere}
+.remind .linkbtn{color:var(--note-ink);margin-top:6px;font-weight:600}
+#noteNew{min-height:76px;resize:vertical}
+.note-add-row{display:flex;justify-content:flex-end;gap:6px;margin:8px 0 14px}
+.notes-empty{color:var(--muted);font-size:13px;text-align:center;padding:10px}
+#edNotes{margin-left:auto;margin-right:4px}
+.linkbtn{justify-self:start;color:var(--accent);font-size:13px;font-weight:500;padding:2px 0}
 
 .ed-vars{border-top:1px solid var(--line);padding-top:14px}
 .ed-vars h3{font-size:15px;margin:0}
@@ -220,7 +237,9 @@ dialog{overflow:auto}
   dialog.sheet .ed{height:100%;padding-top:calc(14px + env(safe-area-inset-top));padding-bottom:calc(14px + env(safe-area-inset-bottom))}
   dialog.sheet #content-field{min-height:45vh}
   dialog.sheet .ed{height:auto;min-height:100%}
-  .vpanel{padding-left:14px}
+  dialog.bsheet{width:100%;max-width:100%;margin:auto 0 0;border:0;border-radius:22px 22px 0 0;max-height:88vh}
+  dialog.bsheet .dlg{padding-bottom:calc(16px + env(safe-area-inset-bottom))}
+  .bsheet .grab{display:block}
 }
 
 /* sem zoom no celular */
@@ -282,6 +301,7 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%}
   <form id="editorForm" class="dlg ed">
     <div class="ed-head">
       <h2 id="edHeading">Novo prompt</h2>
+      <button type="button" class="copy" id="edNotes"></button>
       <button type="button" class="icon-btn" id="edClose" aria-label="Fechar" data-i="x"></button>
     </div>
     <input id="title" type="text" class="ed-title" maxlength="160" placeholder="Título" required autocomplete="off">
@@ -289,7 +309,7 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%}
     <label class="ed-folder" title="Pasta"><span data-i="folder"></span><select id="destination" aria-label="Pasta"></select></label>
     <section class="ed-vars">
       <h3>Variações</h3>
-      <p class="hint">Opções que você escolhe na hora de copiar. O texto da variação vai no final do prompt. Use <b>{opção}</b> onde a escolha deve entrar.</p>
+      <p class="hint">Aqui você monta as opções. Na hora de copiar, o app pergunta qual você quer.</p>
       <div id="varList"></div>
       <div class="chips" id="presetChips"></div>
     </section>
@@ -300,6 +320,29 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%}
       <button type="submit" class="btn primary" id="savePrompt">Salvar</button>
     </div>
   </form>
+</dialog>
+
+<dialog id="varSheet" class="bsheet">
+  <div class="dlg">
+    <div class="grab"></div>
+    <h3 id="vsTitle"></h3>
+    <p class="hint" id="vsHint">Escolha os ajustes (opcional)</p>
+    <div id="vsNote"></div>
+    <div id="vsBody"></div>
+    <button type="button" class="btn primary vs-main" id="vsCopy"></button>
+    <button type="button" class="vs-alt" id="vsOrig">Copiar só o original</button>
+  </div>
+</dialog>
+
+<dialog id="notesSheet" class="bsheet">
+  <div class="dlg">
+    <div class="grab"></div>
+    <div class="ed-head"><h3 id="nsTitle"></h3><button type="button" class="icon-btn" id="nsClose" aria-label="Fechar" data-i="x"></button></div>
+    <p class="hint">Só pra você. As notas não vão junto no prompt copiado.</p>
+    <textarea id="noteNew" placeholder="O que aconteceu na última geração? O que dá pra melhorar?"></textarea>
+    <div class="note-add-row"><button type="button" class="btn primary" id="noteAdd">Adicionar nota</button></div>
+    <div id="nsList"></div>
+  </div>
 </dialog>
 
 <dialog id="picker">
@@ -380,6 +423,7 @@ const I = {
   doc: sv('<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>'),
   download: sv('<path d="M12 4v11m-5-5 5 5 5-5M4 20h16"/>'),
   upload: sv('<path d="M12 20V9m-5 5 5-5 5 5M4 4h16"/>'),
+  note: sv('<path d="M4 4h16v10l-6 6H4z"/><path d="M14 20v-6h6"/>'),
   chev: sv('<path d="m6 9 6 6 6-6"/>'),
   logout: sv('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>')
 };
@@ -400,20 +444,40 @@ let visiblePromptIds = [];
 let copiedId = null, copiedTimer = null;
 let editingId = null;
 let menuAnchor = null;
-let expanded = new Set();   // prompts com variações abertas
+let sheetId = null;         // prompt aberto na janela de variações
+let edOpen = new Set();     // variações com "Ajustar frase" aberto
+let notesId = null;         // prompt aberto na janela de notas
+let noteEditing = null;     // nota sendo editada
+
+/* ================= NOTAS ================= */
+const getNotes = p => Array.isArray(p?.notes) ? p.notes.filter(n => n && n.text) : [];
+const sortedNotes = p => [...getNotes(p)].sort((a, b) => (b.at || 0) - (a.at || 0));
+function fmtWhen(t) {
+  const d = new Date(t || 0), now = new Date();
+  const hm = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  const day = x => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const diff = Math.round((day(now) - day(d)) / 864e5);
+  if (diff === 0) return `Hoje, ${hm}`;
+  if (diff === 1) return `Ontem, ${hm}`;
+  const opts = { day: "2-digit", month: "2-digit" };
+  if (d.getFullYear() !== now.getFullYear()) opts.year = "numeric";
+  return `${d.toLocaleDateString("pt-BR", opts)}, ${hm}`;
+}
 let picks = {};             // { promptId: { variacaoId: opção | true } }
 let edVars = [];            // variações no editor
 
 /* ================= VARIAÇÕES ================= */
 const uid = () => Math.random().toString(36).slice(2, 10);
 const PRESETS = [
-  { name: "Estilo musical", template: "Adicione uma música de fundo no estilo {opção}, combinando com o ritmo dos movimentos da modelo.",
+  { label: "Música", name: "Estilo musical", template: "Adicione uma música de fundo no estilo {opção}, combinando com o ritmo dos movimentos da modelo.",
     options: ["Trap", "Reggaeton", "Lo-fi", "Funk", "Pop", "Eletrônica"] },
-  { name: "Nacionalidade da modelo", template: "A modelo deve ser uma mulher {opção}, respeitando todas as outras regras sobre a nova identidade.",
+  { label: "Nacionalidade", name: "Nacionalidade da modelo", template: "A modelo deve ser uma mulher {opção}, respeitando todas as outras regras sobre a nova identidade.",
     options: ["brasileira", "japonesa", "coreana", "nigeriana", "italiana", "mexicana", "sueca", "indiana"] },
-  { name: "Cor do cabelo", template: "A modelo deve ter cabelo {opção}.",
+  { label: "Cabelo", name: "Cor do cabelo", template: "A modelo deve ter cabelo {opção}.",
     options: ["loiro", "ruivo", "castanho", "preto", "platinado", "rosa"] },
-  { name: "Escrita na tela", template: "Adicione um texto curto e chamativo na tela destacando o produto. Isso é uma exceção à regra que proíbe textos.",
+  { label: "Aparência", name: "Aparência da modelo", template: "A modelo deve ter uma aparência marcante: {opção}. Mantenha o visual realista e natural, como uma pessoa de verdade, e continue respeitando todas as outras regras sobre a nova identidade e a fidelidade ao produto.",
+    options: ["a mulher mais bonita do mundo, com traços perfeitos e harmoniosos", "uma mulher de aparência muito excêntrica e fora do comum", "uma mulher de beleza exótica e rara", "uma mulher comum, com aparência de pessoa real do dia a dia"] },
+  { label: "Escrita na tela", name: "Escrita na tela", template: "Adicione um texto curto e chamativo na tela destacando o produto. Isso é uma exceção à regra que proíbe textos.",
     options: [] }
 ];
 const getVars = p => Array.isArray(p?.variations) ? p.variations.filter(v => v && v.name) : [];
@@ -663,36 +727,20 @@ function promptRow(p, showPath) {
   const sel = selected.has(p.id);
   const done = copiedId === p.id;
   const vars = getVars(p);
-  const open = vars.length && expanded.has(p.id);
-  const n = activePicks(p).length;
   const subParts = [];
-  if (showPath) subParts.push(pathOf(parentOf(p)));
+  const nn = getNotes(p).length;
+  if (showPath) subParts.push(esc(pathOf(parentOf(p))));
+  if (nn) subParts.push(`<span class="note-ind">📝 ${plural(nn, "nota", "notas")}</span>`);
   if (vars.length) subParts.push(plural(vars.length, "variação", "variações"));
   let h = `<div class="row${sel ? " selected" : ""}">
     <label class="chk"><input type="checkbox" data-sel="${id}" ${sel ? "checked" : ""} aria-label="Selecionar ${esc(p.title)}"></label>
     <button class="main" data-edit="${id}">
       <span class="title">${p.favorite ? `<span class="fav-mark">${I.starFill}</span>` : ""}${esc(p.title)}</span>
-      ${subParts.length ? `<span class="sub">${esc(subParts.join(" · "))}</span>` : ""}
+      ${subParts.length ? `<span class="sub">${subParts.join(" · ")}</span>` : ""}
     </button>
-    ${vars.length ? `<button class="icon-btn vtoggle${open ? " open" : ""}" data-vars="${id}" aria-label="Variações" aria-expanded="${open ? "true" : "false"}">${I.chev}</button>` : ""}
-    <button class="copy${done ? " done" : ""}" data-copy="${id}">${done ? I.check + "<span>Copiado</span>" : I.copy + "<span>Copiar</span>"}${n ? `<span class="badge">+${n}</span>` : ""}</button>
+    <button class="copy${done ? " done" : ""}" data-copy="${id}">${done ? I.check + "<span>Copiado</span>" : I.copy + "<span>Copiar</span>"}</button>
     <button class="icon-btn" data-more-prompt="${id}" aria-label="Mais opções">${I.more}</button>
   </div>`;
-  if (open) {
-    const pk = picks[p.id] || {};
-    h += `<div class="vpanel">` + vars.map(v => {
-      const vid = esc(v.id);
-      const chips = v.options?.length
-        ? v.options.map((o, k) => `<button class="chip${pk[v.id] === o ? " on" : ""}" data-pick="${id}" data-v="${vid}" data-k="${k}">${esc(o)}</button>`).join("")
-          + `<button class="chip add" data-newopt="${id}" data-v="${vid}">+ outra</button>`
-        : `<button class="chip${pk[v.id] !== undefined ? " on" : ""}" data-pick="${id}" data-v="${vid}" data-k="-1">${pk[v.id] !== undefined ? "✓ Ativada" : "Ativar"}</button>`;
-      return `<div class="vgroup"><div class="vgroup-name">${esc(v.name)}</div><div class="chips">${chips}</div></div>`;
-    }).join("") + `<div class="vfoot">
-        <button class="btn primary" data-copy="${id}">${I.copy}<span>${copiedId === p.id ? "Copiado ✓" : "Copiar esta versão"}</span></button>
-        ${n ? `<button class="btn" data-clear="${id}">Limpar</button>` : ""}
-        <span class="muted">${n ? plural(n, "ajuste", "ajustes") + " no final do prompt" : "Toque nas opções que quiser"}</span>
-      </div></div>`;
-  }
   return h;
 }
 
@@ -749,6 +797,9 @@ function render() {
   $("content").innerHTML = h;
 
   updateSelbar();
+  if ($("varSheet").open) renderSheet();
+  if ($("notesSheet").open) renderNotes();
+  if (editor.open) setEdNotes();
 }
 
 function updateSelbar() {
@@ -764,22 +815,146 @@ function updateSelbar() {
 }
 
 /* ================= AÇÕES ================= */
-async function copyPrompt(id) {
+async function copyPrompt(id, original = false) {
   const p = getItem(id);
-  if (!p) return;
-  if (!(await writeClipboard(composed(p)))) return toast("Não foi possível copiar.");
+  if (!p) return false;
+  if (!(await writeClipboard(original ? p.content : composed(p)))) { toast("Não foi possível copiar."); return false; }
   copiedId = id;
   clearTimeout(copiedTimer);
   copiedTimer = setTimeout(() => { copiedId = null; render(); }, 1500);
   render();
   updateDoc(itemRef(id), { lastUsedAt: serverTimestamp() }).catch(console.error);
+  return true;
 }
+
+/* ================= JANELA DE VARIAÇÕES ================= */
+const pickLabel = (v, val) => v.options?.length ? val : v.name;
+function openSheet(id) {
+  sheetId = id;
+  renderSheet();
+  $("varSheet").showModal();
+  $("vsCopy").focus();
+}
+function renderSheet() {
+  const p = getItem(sheetId);
+  if (!p || !(getVars(p).length || getNotes(p).length)) return $("varSheet").close();
+  const last = sortedNotes(p)[0];
+  $("vsNote").innerHTML = last ? `<div class="remind"><b>📝 Última nota · ${esc(fmtWhen(last.at))}</b><div class="txt">${esc(last.text)}</div><button type="button" class="linkbtn" data-open-notes>Ver todas / adicionar ›</button></div>` : "";
+  $("vsHint").hidden = !getVars(p).length;
+  const pk = picks[p.id] || {};
+  $("vsTitle").textContent = p.title;
+  $("vsBody").innerHTML = getVars(p).map(v => {
+    const vid = esc(v.id), cur = pk[v.id];
+    let chips = `<button type="button" class="chip${cur === undefined ? " on" : ""}" data-pick="${vid}" data-k="none">${v.options?.length ? "Nenhum" : "Não"}</button>`;
+    chips += v.options?.length
+      ? v.options.map((o, k) => `<button type="button" class="chip${cur === o ? " on" : ""}" data-pick="${vid}" data-k="${k}">${esc(o)}</button>`).join("")
+        + `<button type="button" class="chip add" data-newopt="${vid}">+ outra</button>`
+      : `<button type="button" class="chip${cur !== undefined ? " on" : ""}" data-pick="${vid}" data-k="-1">Sim</button>`;
+    return `<div class="vgroup"><div class="vgroup-name">${esc(v.name)}</div><div class="chips">${chips}</div></div>`;
+  }).join("");
+  const act = activePicks(p);
+  $("vsCopy").innerHTML = I.copy + `<span>${act.length ? "Copiar com " + esc(act.map(v => pickLabel(v, pk[v.id])).join(" + ")) : getVars(p).length ? "Copiar original" : "Copiar"}</span>`;
+  $("vsOrig").hidden = !act.length;
+}
+$("vsBody").addEventListener("click", e => {
+  const p = getItem(sheetId);
+  if (!p) return;
+  let el;
+  if ((el = e.target.closest("[data-pick]"))) {
+    const v = getVars(p).find(x => x.id === el.dataset.pick);
+    if (!v) return;
+    const pk = picks[p.id] ||= {};
+    const k = el.dataset.k;
+    if (k === "none") delete pk[v.id];
+    else pk[v.id] = +k < 0 ? true : v.options[+k];
+    return renderSheet();
+  }
+  if ((el = e.target.closest("[data-newopt]"))) return addOptionInline(p.id, el.dataset.newopt);
+});
+async function sheetCopy(original) {
+  const p = getItem(sheetId);
+  if (!p) return;
+  const act = activePicks(p), pk = picks[p.id] || {};
+  if (!(await copyPrompt(p.id, original))) return;
+  $("varSheet").close();
+  toast(!original && act.length ? `Copiado com ${act.map(v => pickLabel(v, pk[v.id])).join(" + ")}` : "Copiado ✓");
+}
+$("vsCopy").onclick = () => sheetCopy(false);
+$("vsNote").addEventListener("click", e => {
+  if (!e.target.closest("[data-open-notes]")) return;
+  const id = sheetId;
+  $("varSheet").close();
+  openNotes(id);
+});
+
+/* ================= JANELA DE NOTAS ================= */
+function openNotes(id) {
+  notesId = id;
+  noteEditing = null;
+  $("noteNew").value = "";
+  renderNotes();
+  $("notesSheet").showModal();
+  $("noteNew").focus();
+}
+function renderNotes() {
+  const p = getItem(notesId);
+  if (!p) return $("notesSheet").close();
+  $("nsTitle").textContent = `📝 ${p.title}`;
+  const keep = $("nsList").querySelector(".nedit")?.value;
+  const list = sortedNotes(p);
+  $("nsList").innerHTML = list.length ? list.map(n => {
+    const ed = n.id === noteEditing;
+    return `<div class="note" data-nid="${esc(n.id)}">
+      <div class="d"><span>${esc(fmtWhen(n.at))}</span><span class="acts">
+        <button type="button" data-nedit aria-label="Editar nota">${I.edit}</button>
+        <button type="button" data-ndel aria-label="Excluir nota">${I.trash}</button></span></div>
+      ${ed ? `<textarea class="nedit">${esc(keep ?? n.text)}</textarea>
+        <div class="note-add-row" style="margin:8px 0 2px"><button type="button" class="btn" data-ncancel>Cancelar</button><button type="button" class="btn primary" data-nsave>Salvar</button></div>`
+        : `<p>${esc(n.text)}</p>`}
+    </div>`;
+  }).join("") : `<p class="notes-empty">Nenhuma nota ainda.</p>`;
+}
+const saveNotes = (p, notes, msg) => run(() => updateDoc(itemRef(p.id), { notes }), msg);
+$("noteAdd").onclick = async () => {
+  const p = getItem(notesId);
+  const text = $("noteNew").value.trim();
+  if (!p || !text) return $("noteNew").focus();
+  if (await saveNotes(p, [...getNotes(p), { id: uid(), text, at: Date.now() }], "Nota adicionada")) $("noteNew").value = "";
+};
+$("nsList").addEventListener("click", async e => {
+  const p = getItem(notesId);
+  const box = e.target.closest("[data-nid]");
+  if (!p || !box) return;
+  const nid = box.dataset.nid;
+  if (e.target.closest("[data-nedit]")) { noteEditing = nid; renderNotes(); return $("nsList").querySelector(".nedit")?.focus(); }
+  if (e.target.closest("[data-ncancel]")) { noteEditing = null; return renderNotes(); }
+  if (e.target.closest("[data-nsave]")) {
+    const text = box.querySelector(".nedit").value.trim();
+    if (!text) return;
+    noteEditing = null;
+    return saveNotes(p, getNotes(p).map(n => n.id === nid ? { ...n, text } : n), "Nota salva");
+  }
+  if (e.target.closest("[data-ndel]")) {
+    if (!(await confirmBox("Excluir esta nota?", "", "Excluir", true))) return;
+    if (noteEditing === nid) noteEditing = null;
+    saveNotes(p, getNotes(p).filter(n => n.id !== nid), "Nota excluída");
+  }
+});
+$("nsClose").onclick = () => $("notesSheet").close();
+function setEdNotes() {
+  const p = editingId ? getItem(editingId) : null;
+  $("edNotes").hidden = !p;
+  if (p) { const n = getNotes(p).length; $("edNotes").textContent = n ? `📝 Notas (${n})` : "📝 Notas"; }
+}
+$("edNotes").onclick = () => editingId && openNotes(editingId);
+$("vsOrig").onclick = () => sheetCopy(true);
 
 function promptMenu(id, anchor) {
   const p = getItem(id);
   if (!p) return;
   openMenu(anchor, [
     { icon: "edit", label: "Editar", action: () => openEditor(p) },
+    { icon: "note", label: getNotes(p).length ? `Notas (${getNotes(p).length})` : "Notas", action: () => openNotes(id) },
     { icon: "star", label: p.favorite ? "Remover dos favoritos" : "Adicionar aos favoritos",
       action: () => run(() => updateDoc(itemRef(id), { favorite: !p.favorite }), p.favorite ? "Removido dos favoritos" : "Adicionado aos favoritos") },
     { icon: "move", label: "Mover para…", action: () => movePrompts([id]) },
@@ -889,17 +1064,18 @@ function renderVars() {
       <input type="text" data-f="name" value="${esc(v.name)}" placeholder="Nome (ex.: Estilo musical)" autocomplete="off">
       <button type="button" class="icon-btn" data-delvar aria-label="Remover variação">${I.trash}</button>
     </div>
-    <textarea data-f="template" placeholder="O que adicionar ao prompt. Ex.: Adicione uma música de fundo no estilo {opção}.">${esc(v.template)}</textarea>
     ${v.options.length ? `<div class="chips">${v.options.map((o, k) => `<span class="opt-chip">${esc(o)}<button type="button" data-delopt="${k}" aria-label="Remover ${esc(o)}">${I.x}</button></span>`).join("")}</div>` : ""}
     <div class="opt-add">
       <input type="text" data-f="newopt" placeholder="${v.options.length ? "Adicionar opção" : "Opções (vazio = liga/desliga)"}" autocomplete="off" enterkeyhint="done">
       <button type="button" class="icon-btn" data-addopt aria-label="Adicionar opção">${I.plus}</button>
     </div>
+    <button type="button" class="linkbtn" data-adv>${edOpen.has(v.id) ? "Esconder frase" : "Ajustar frase ›"}</button>
+    ${edOpen.has(v.id) ? `<textarea data-f="template" placeholder="Deixe vazio e o app escreve sozinho (ex.: “${esc(v.name || "Estilo musical")}: Trap”). Se quiser, escreva sua frase e use {opção} onde entra a escolha.">${esc(v.template)}</textarea>` : ""}
   </div>`).join("");
   const names = new Set(edVars.map(v => v.name.trim().toLowerCase()));
   $("presetChips").innerHTML = PRESETS.map((p, k) => names.has(p.name.toLowerCase()) ? "" :
-    `<button type="button" class="chip add" data-preset="${k}">+ ${esc(p.name)}</button>`).join("") +
-    `<button type="button" class="chip add" data-preset="-1">+ Outra variação</button>`;
+    `<button type="button" class="chip add" data-preset="${k}">+ ${esc(p.label)}</button>`).join("") +
+    `<button type="button" class="chip add" data-preset="-1">+ Outra</button>`;
 }
 function addOpts(i, input) {
   const vals = input.value.split(",").map(s => s.trim()).filter(Boolean);
@@ -936,6 +1112,12 @@ $("varList").addEventListener("click", e => {
   if (e.target.closest("[data-delvar]")) { edVars.splice(i, 1); return renderVars(); }
   if ((el = e.target.closest("[data-delopt]"))) { edVars[i].options.splice(+el.dataset.delopt, 1); return renderVars(); }
   if (e.target.closest("[data-addopt]")) return addOpts(i, card.querySelector('[data-f="newopt"]'));
+  if (e.target.closest("[data-adv]")) {
+    const id = edVars[i].id;
+    edOpen.has(id) ? edOpen.delete(id) : edOpen.add(id);
+    renderVars();
+    if (edOpen.has(id)) $("varList").querySelector(`[data-vi="${i}"] [data-f="template"]`)?.focus();
+  }
 });
 $("presetChips").addEventListener("click", e => {
   const b = e.target.closest("[data-preset]");
@@ -956,7 +1138,9 @@ function openEditor(p = null) {
   $("title").value = p?.title || "";
   $("content-field").value = p?.content || "";
   edVars = cleanVars(getVars(p));
+  edOpen = new Set();
   renderVars();
+  setEdNotes();
   const dest = $("destination");
   dest.innerHTML = '<option value="">Início</option>' +
     folderTree().map(({ f }) => `<option value="${esc(f.id)}">${esc(pathOf(f.id))}</option>`).join("");
@@ -1011,7 +1195,7 @@ $("editorForm").onsubmit = async e => {
     ? updateDoc(itemRef(editingId), data)
     : addDoc(itemsRef(), { ...data, favorite: false, createdAt: serverTimestamp() }));
   btn.disabled = false;
-  if (ok) { editor.close(); toast(wasEditing ? "Prompt salvo" : "Prompt criado"); }
+  if (ok) { editor.close(); toast(variations.length ? "Salvo! Toque em Copiar para escolher as variações" : (wasEditing ? "Prompt salvo" : "Prompt criado")); }
 };
 
 /* ================= EVENTOS DA TELA ================= */
@@ -1020,24 +1204,11 @@ $("content").addEventListener("click", e => {
   let el;
   if ((el = t.closest("[data-more-prompt]"))) return promptMenu(el.dataset.morePrompt, el);
   if ((el = t.closest("[data-more-folder]"))) return folderMenu(el.dataset.moreFolder, el);
-  if ((el = t.closest("[data-copy]"))) return copyPrompt(el.dataset.copy);
-  if ((el = t.closest("[data-vars]"))) {
-    const id = el.dataset.vars;
-    expanded.has(id) ? expanded.delete(id) : expanded.add(id);
-    return render();
+  if ((el = t.closest("[data-copy]"))) {
+    const id = el.dataset.copy;
+    const p = getItem(id);
+    return getVars(p).length || getNotes(p).length ? openSheet(id) : copyPrompt(id);
   }
-  if ((el = t.closest("[data-pick]"))) {
-    const p = getItem(el.dataset.pick);
-    const v = getVars(p).find(x => x.id === el.dataset.v);
-    if (!v) return;
-    const pk = picks[p.id] ||= {};
-    const k = +el.dataset.k;
-    const val = k < 0 ? true : v.options[k];
-    pk[v.id] === val ? delete pk[v.id] : (pk[v.id] = val);
-    return render();
-  }
-  if ((el = t.closest("[data-clear]"))) { delete picks[el.dataset.clear]; return render(); }
-  if ((el = t.closest("[data-newopt]"))) return addOptionInline(el.dataset.newopt, el.dataset.v);
   if ((el = t.closest("[data-edit]"))) return openEditor(getItem(el.dataset.edit));
   if (t.closest(".chk")) return;
   if (t.closest("[data-fav-view]")) return go(null, "fav");
