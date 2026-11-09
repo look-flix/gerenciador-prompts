@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <link rel="manifest" href="manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -97,7 +97,7 @@ main{padding:22px 28px 140px;min-width:0}
 .row.folder{cursor:pointer;padding-left:16px;gap:10px}
 .row.folder>svg{color:var(--accent)}
 .row .main{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;text-align:left;padding:10px 6px;cursor:pointer}
-.row .title{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.row .title{max-width:100%;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere;font-weight:500}
 .row .sub{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--muted);margin-top:1px}
 .fav-mark{color:var(--fav);margin-right:5px}
 .fav-mark svg{width:13px;height:13px;vertical-align:-1px}
@@ -165,6 +165,40 @@ dialog.sheet{width:min(760px,calc(100% - 24px))}
 .set-item.danger,.set-item.danger svg{color:var(--danger)}
 #syncLine{font-size:12px;margin:12px 0 0}
 
+/* ---------- variações ---------- */
+.vtoggle svg{transition:transform .15s}
+.vtoggle.open svg{transform:rotate(180deg)}
+.vtoggle.open{color:var(--accent)}
+.copy .badge{background:var(--accent);color:var(--accent-text);border-radius:999px;padding:0 6px;font-size:11px;line-height:17px}
+.copy.done .badge{display:none}
+.vpanel{border-top:1px solid var(--line);padding:12px 14px 14px 50px;background:var(--bg)}
+.vgroup{margin-bottom:12px}
+.vgroup-name{font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--panel);font-size:13px}
+.chip:hover{border-color:var(--accent)}
+.chip.on{background:var(--accent);color:var(--accent-text);border-color:transparent;font-weight:600}
+.chip.add{color:var(--muted);border-style:dashed}
+.vfoot{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.vfoot .btn{height:36px;padding:0 14px}
+.vfoot .muted{font-size:12px}
+
+.ed-vars{border-top:1px solid var(--line);padding-top:14px}
+.ed-vars h3{font-size:15px;margin:0}
+.hint{font-size:12px;color:var(--muted);margin:3px 0 10px}
+#presetChips{margin-bottom:12px}
+.vcard{border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px;display:grid;gap:8px;background:var(--bg)}
+.vcard-head{display:flex;gap:6px;align-items:center}
+.vcard-head input{font-weight:600}
+.vcard textarea{min-height:66px;resize:vertical;font-size:14px;line-height:1.45}
+.opt-chip{display:inline-flex;align-items:center;gap:2px;height:30px;padding:0 4px 0 11px;border-radius:999px;background:var(--accent-soft);font-size:13px}
+.opt-chip button{width:24px;height:24px;display:grid;place-items:center;border-radius:50%;color:var(--muted)}
+.opt-chip button svg{width:13px;height:13px}
+.opt-add{display:flex;gap:6px;align-items:center}
+.opt-add input{height:38px;padding:6px 10px;font-size:14px}
+dialog{overflow:auto}
+.ed-actions{position:sticky;bottom:0;background:var(--panel);padding:12px 0 2px;margin-bottom:-2px}
+
 #toast{display:none;position:fixed;inset:auto auto calc(96px + env(safe-area-inset-bottom)) 50%;transform:translateX(-50%);margin:0;border:0;background:var(--text);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;z-index:100;max-width:calc(100% - 32px);text-align:center;box-shadow:var(--shadow)}
 #toast.show{display:block}
 
@@ -184,7 +218,15 @@ dialog.sheet{width:min(760px,calc(100% - 24px))}
   #selbar button{padding:0 10px}
   dialog.sheet{width:100%;max-width:100%;height:100%;height:100dvh;max-height:100%;margin:0;border:0;border-radius:0}
   dialog.sheet .ed{height:100%;padding-top:calc(14px + env(safe-area-inset-top));padding-bottom:calc(14px + env(safe-area-inset-bottom))}
-  dialog.sheet #content-field{flex:1;min-height:0;resize:none}
+  dialog.sheet #content-field{min-height:45vh}
+  dialog.sheet .ed{height:auto;min-height:100%}
+  .vpanel{padding-left:14px}
+}
+
+/* sem zoom no celular */
+html{touch-action:manipulation;-webkit-text-size-adjust:100%}
+@media (max-width:760px){
+  input,textarea,select{font-size:16px!important}
 }
 </style>
 </head>
@@ -245,6 +287,12 @@ dialog.sheet{width:min(760px,calc(100% - 24px))}
     <input id="title" type="text" class="ed-title" maxlength="160" placeholder="Título" required autocomplete="off">
     <textarea id="content-field" placeholder="Escreva ou cole seu prompt aqui…" required></textarea>
     <label class="ed-folder" title="Pasta"><span data-i="folder"></span><select id="destination" aria-label="Pasta"></select></label>
+    <section class="ed-vars">
+      <h3>Variações</h3>
+      <p class="hint">Opções que você escolhe na hora de copiar. O texto da variação vai no final do prompt. Use <b>{opção}</b> onde a escolha deve entrar.</p>
+      <div id="varList"></div>
+      <div class="chips" id="presetChips"></div>
+    </section>
     <div class="ed-actions">
       <button type="button" class="btn" id="edCopy" data-i="copy"><span>Copiar</span></button>
       <span class="grow"></span>
@@ -332,6 +380,7 @@ const I = {
   doc: sv('<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>'),
   download: sv('<path d="M12 4v11m-5-5 5 5 5-5M4 20h16"/>'),
   upload: sv('<path d="M12 20V9m-5 5 5-5 5 5M4 4h16"/>'),
+  chev: sv('<path d="m6 9 6 6 6-6"/>'),
   logout: sv('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>')
 };
 document.querySelectorAll("[data-i]").forEach(el => el.insertAdjacentHTML("afterbegin", I[el.dataset.i] || ""));
@@ -351,6 +400,44 @@ let visiblePromptIds = [];
 let copiedId = null, copiedTimer = null;
 let editingId = null;
 let menuAnchor = null;
+let expanded = new Set();   // prompts com variações abertas
+let picks = {};             // { promptId: { variacaoId: opção | true } }
+let edVars = [];            // variações no editor
+
+/* ================= VARIAÇÕES ================= */
+const uid = () => Math.random().toString(36).slice(2, 10);
+const PRESETS = [
+  { name: "Estilo musical", template: "Adicione uma música de fundo no estilo {opção}, combinando com o ritmo dos movimentos da modelo.",
+    options: ["Trap", "Reggaeton", "Lo-fi", "Funk", "Pop", "Eletrônica"] },
+  { name: "Nacionalidade da modelo", template: "A modelo deve ser uma mulher {opção}, respeitando todas as outras regras sobre a nova identidade.",
+    options: ["brasileira", "japonesa", "coreana", "nigeriana", "italiana", "mexicana", "sueca", "indiana"] },
+  { name: "Cor do cabelo", template: "A modelo deve ter cabelo {opção}.",
+    options: ["loiro", "ruivo", "castanho", "preto", "platinado", "rosa"] },
+  { name: "Escrita na tela", template: "Adicione um texto curto e chamativo na tela destacando o produto. Isso é uma exceção à regra que proíbe textos.",
+    options: [] }
+];
+const getVars = p => Array.isArray(p?.variations) ? p.variations.filter(v => v && v.name) : [];
+const PH = /\{\s*op[çc][ãa]o\s*\}/i;
+const PH_ALL = /\{\s*op[çc][ãa]o\s*\}/gi;
+function variationLine(v, choice) {
+  const t = (v.template || "").trim();
+  if (!v.options?.length) return t || v.name;
+  if (!t) return `${v.name}: ${choice}`;
+  return PH.test(t) ? t.replace(PH_ALL, choice) : `${t} ${choice}`;
+}
+const activePicks = p => { const pk = picks[p.id] || {}; return getVars(p).filter(v => pk[v.id] !== undefined); };
+function composed(p) {
+  const pk = picks[p.id] || {};
+  const lines = activePicks(p).map(v => variationLine(v, pk[v.id]));
+  if (!lines.length) return p.content;
+  return `${p.content}\n\n**AJUSTES DESTA VERSÃO** (têm prioridade sobre qualquer instrução acima que entre em conflito):\n${lines.map(l => "- " + l).join("\n")}`;
+}
+const cleanVars = list => list.map(v => ({
+  id: v.id || uid(),
+  name: String(v.name || "").trim(),
+  template: String(v.template || "").trim(),
+  options: [...new Set((v.options || []).map(o => String(o).trim()).filter(Boolean))]
+}));
 
 /* ================= UTILITÁRIOS ================= */
 const esc = (v = "") => String(v).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" })[c]);
@@ -575,15 +662,38 @@ function promptRow(p, showPath) {
   const id = esc(p.id);
   const sel = selected.has(p.id);
   const done = copiedId === p.id;
-  return `<div class="row${sel ? " selected" : ""}">
+  const vars = getVars(p);
+  const open = vars.length && expanded.has(p.id);
+  const n = activePicks(p).length;
+  const subParts = [];
+  if (showPath) subParts.push(pathOf(parentOf(p)));
+  if (vars.length) subParts.push(plural(vars.length, "variação", "variações"));
+  let h = `<div class="row${sel ? " selected" : ""}">
     <label class="chk"><input type="checkbox" data-sel="${id}" ${sel ? "checked" : ""} aria-label="Selecionar ${esc(p.title)}"></label>
     <button class="main" data-edit="${id}">
       <span class="title">${p.favorite ? `<span class="fav-mark">${I.starFill}</span>` : ""}${esc(p.title)}</span>
-      ${showPath ? `<span class="sub">${esc(pathOf(parentOf(p)))}</span>` : ""}
+      ${subParts.length ? `<span class="sub">${esc(subParts.join(" · "))}</span>` : ""}
     </button>
-    <button class="copy${done ? " done" : ""}" data-copy="${id}">${done ? I.check + "<span>Copiado</span>" : I.copy + "<span>Copiar</span>"}</button>
+    ${vars.length ? `<button class="icon-btn vtoggle${open ? " open" : ""}" data-vars="${id}" aria-label="Variações" aria-expanded="${open ? "true" : "false"}">${I.chev}</button>` : ""}
+    <button class="copy${done ? " done" : ""}" data-copy="${id}">${done ? I.check + "<span>Copiado</span>" : I.copy + "<span>Copiar</span>"}${n ? `<span class="badge">+${n}</span>` : ""}</button>
     <button class="icon-btn" data-more-prompt="${id}" aria-label="Mais opções">${I.more}</button>
   </div>`;
+  if (open) {
+    const pk = picks[p.id] || {};
+    h += `<div class="vpanel">` + vars.map(v => {
+      const vid = esc(v.id);
+      const chips = v.options?.length
+        ? v.options.map((o, k) => `<button class="chip${pk[v.id] === o ? " on" : ""}" data-pick="${id}" data-v="${vid}" data-k="${k}">${esc(o)}</button>`).join("")
+          + `<button class="chip add" data-newopt="${id}" data-v="${vid}">+ outra</button>`
+        : `<button class="chip${pk[v.id] !== undefined ? " on" : ""}" data-pick="${id}" data-v="${vid}" data-k="-1">${pk[v.id] !== undefined ? "✓ Ativada" : "Ativar"}</button>`;
+      return `<div class="vgroup"><div class="vgroup-name">${esc(v.name)}</div><div class="chips">${chips}</div></div>`;
+    }).join("") + `<div class="vfoot">
+        <button class="btn primary" data-copy="${id}">${I.copy}<span>${copiedId === p.id ? "Copiado ✓" : "Copiar esta versão"}</span></button>
+        ${n ? `<button class="btn" data-clear="${id}">Limpar</button>` : ""}
+        <span class="muted">${n ? plural(n, "ajuste", "ajustes") + " no final do prompt" : "Toque nas opções que quiser"}</span>
+      </div></div>`;
+  }
+  return h;
 }
 
 function render() {
@@ -657,7 +767,7 @@ function updateSelbar() {
 async function copyPrompt(id) {
   const p = getItem(id);
   if (!p) return;
-  if (!(await writeClipboard(p.content))) return toast("Não foi possível copiar.");
+  if (!(await writeClipboard(composed(p)))) return toast("Não foi possível copiar.");
   copiedId = id;
   clearTimeout(copiedTimer);
   copiedTimer = setTimeout(() => { copiedId = null; render(); }, 1500);
@@ -760,12 +870,93 @@ async function deleteFolder(id) {
   await run(() => commitOps(all.map(x => b => b.delete(itemRef(x.id)))), "Pasta excluída");
 }
 
+async function addOptionInline(pid, vid) {
+  const p = getItem(pid);
+  const v = getVars(p).find(x => x.id === vid);
+  if (!v) return;
+  const val = (await promptBox(`Nova opção em “${v.name}”`, "", "Adicionar"))?.trim();
+  if (!val) return;
+  (picks[pid] ||= {})[vid] = val;
+  if (v.options.includes(val)) return render();
+  const vars = cleanVars(getVars(p)).map(x => x.id === vid ? { ...x, options: [...x.options, val] } : x);
+  await run(() => updateDoc(itemRef(pid), { variations: vars }));
+}
+
+/* ================= EDITOR: VARIAÇÕES ================= */
+function renderVars() {
+  $("varList").innerHTML = edVars.map((v, i) => `<div class="vcard" data-vi="${i}">
+    <div class="vcard-head">
+      <input type="text" data-f="name" value="${esc(v.name)}" placeholder="Nome (ex.: Estilo musical)" autocomplete="off">
+      <button type="button" class="icon-btn" data-delvar aria-label="Remover variação">${I.trash}</button>
+    </div>
+    <textarea data-f="template" placeholder="O que adicionar ao prompt. Ex.: Adicione uma música de fundo no estilo {opção}.">${esc(v.template)}</textarea>
+    ${v.options.length ? `<div class="chips">${v.options.map((o, k) => `<span class="opt-chip">${esc(o)}<button type="button" data-delopt="${k}" aria-label="Remover ${esc(o)}">${I.x}</button></span>`).join("")}</div>` : ""}
+    <div class="opt-add">
+      <input type="text" data-f="newopt" placeholder="${v.options.length ? "Adicionar opção" : "Opções (vazio = liga/desliga)"}" autocomplete="off" enterkeyhint="done">
+      <button type="button" class="icon-btn" data-addopt aria-label="Adicionar opção">${I.plus}</button>
+    </div>
+  </div>`).join("");
+  const names = new Set(edVars.map(v => v.name.trim().toLowerCase()));
+  $("presetChips").innerHTML = PRESETS.map((p, k) => names.has(p.name.toLowerCase()) ? "" :
+    `<button type="button" class="chip add" data-preset="${k}">+ ${esc(p.name)}</button>`).join("") +
+    `<button type="button" class="chip add" data-preset="-1">+ Outra variação</button>`;
+}
+function addOpts(i, input) {
+  const vals = input.value.split(",").map(s => s.trim()).filter(Boolean);
+  if (!vals.length) return;
+  const v = edVars[i];
+  vals.forEach(o => { if (!v.options.includes(o)) v.options.push(o); });
+  renderVars();
+  $("varList").querySelector(`[data-vi="${i}"] [data-f="newopt"]`)?.focus();
+}
+function flushNewOpts() {
+  $("varList").querySelectorAll('[data-f="newopt"]').forEach(inp => {
+    const i = +inp.closest("[data-vi]").dataset.vi;
+    inp.value.split(",").map(s => s.trim()).filter(Boolean).forEach(o => { if (!edVars[i].options.includes(o)) edVars[i].options.push(o); });
+    inp.value = "";
+  });
+}
+$("varList").addEventListener("input", e => {
+  const f = e.target.dataset.f;
+  if (f !== "name" && f !== "template") return;
+  edVars[+e.target.closest("[data-vi]").dataset.vi][f] = e.target.value;
+});
+$("varList").addEventListener("keydown", e => {
+  if (e.target.tagName !== "INPUT") return;
+  if (e.key === "Enter" || (e.key === "," && e.target.dataset.f === "newopt")) {
+    e.preventDefault();
+    if (e.target.dataset.f === "newopt") addOpts(+e.target.closest("[data-vi]").dataset.vi, e.target);
+  }
+});
+$("varList").addEventListener("click", e => {
+  const card = e.target.closest("[data-vi]");
+  if (!card) return;
+  const i = +card.dataset.vi;
+  let el;
+  if (e.target.closest("[data-delvar]")) { edVars.splice(i, 1); return renderVars(); }
+  if ((el = e.target.closest("[data-delopt]"))) { edVars[i].options.splice(+el.dataset.delopt, 1); return renderVars(); }
+  if (e.target.closest("[data-addopt]")) return addOpts(i, card.querySelector('[data-f="newopt"]'));
+});
+$("presetChips").addEventListener("click", e => {
+  const b = e.target.closest("[data-preset]");
+  if (!b) return;
+  const k = +b.dataset.preset;
+  const base = k < 0 ? { name: "", template: "", options: [] } : PRESETS[k];
+  edVars.push({ id: uid(), name: base.name, template: base.template, options: [...base.options] });
+  renderVars();
+  const card = $("varList").lastElementChild;
+  card?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  if (k < 0) card?.querySelector('[data-f="name"]').focus();
+});
+
 /* ================= EDITOR ================= */
 function openEditor(p = null) {
   editingId = p?.id || null;
   $("edHeading").textContent = p ? "Editar prompt" : "Novo prompt";
   $("title").value = p?.title || "";
   $("content-field").value = p?.content || "";
+  edVars = cleanVars(getVars(p));
+  renderVars();
   const dest = $("destination");
   dest.innerHTML = '<option value="">Início</option>' +
     folderTree().map(({ f }) => `<option value="${esc(f.id)}">${esc(pathOf(f.id))}</option>`).join("");
@@ -779,7 +970,9 @@ function openEditor(p = null) {
 }
 function editorDirty() {
   const p = editingId ? getItem(editingId) : null;
-  return $("title").value !== (p?.title || "") || $("content-field").value !== (p?.content || "");
+  return $("title").value !== (p?.title || "") || $("content-field").value !== (p?.content || "")
+    || JSON.stringify(cleanVars(edVars)) !== JSON.stringify(cleanVars(getVars(p)))
+    || [...$("varList").querySelectorAll('[data-f="newopt"]')].some(i => i.value.trim());
 }
 async function closeEditor() {
   if (editorDirty()) {
@@ -807,7 +1000,10 @@ $("editorForm").onsubmit = async e => {
   const content = $("content-field").value.trim();
   if (!title || !content) return toast("Preencha o título e o prompt.");
   const parentId = $("destination").value || null;
-  const data = { type: "prompt", title, content, parentId, updatedAt: serverTimestamp(), lastUsedAt: serverTimestamp() };
+  flushNewOpts();
+  const variations = cleanVars(edVars);
+  if (variations.some(v => !v.name)) { renderVars(); return toast("Dê um nome para cada variação."); }
+  const data = { type: "prompt", title, content, parentId, variations, updatedAt: serverTimestamp(), lastUsedAt: serverTimestamp() };
   const btn = $("savePrompt");
   btn.disabled = true;
   const wasEditing = !!editingId;
@@ -825,6 +1021,23 @@ $("content").addEventListener("click", e => {
   if ((el = t.closest("[data-more-prompt]"))) return promptMenu(el.dataset.morePrompt, el);
   if ((el = t.closest("[data-more-folder]"))) return folderMenu(el.dataset.moreFolder, el);
   if ((el = t.closest("[data-copy]"))) return copyPrompt(el.dataset.copy);
+  if ((el = t.closest("[data-vars]"))) {
+    const id = el.dataset.vars;
+    expanded.has(id) ? expanded.delete(id) : expanded.add(id);
+    return render();
+  }
+  if ((el = t.closest("[data-pick]"))) {
+    const p = getItem(el.dataset.pick);
+    const v = getVars(p).find(x => x.id === el.dataset.v);
+    if (!v) return;
+    const pk = picks[p.id] ||= {};
+    const k = +el.dataset.k;
+    const val = k < 0 ? true : v.options[k];
+    pk[v.id] === val ? delete pk[v.id] : (pk[v.id] = val);
+    return render();
+  }
+  if ((el = t.closest("[data-clear]"))) { delete picks[el.dataset.clear]; return render(); }
+  if ((el = t.closest("[data-newopt]"))) return addOptionInline(el.dataset.newopt, el.dataset.v);
   if ((el = t.closest("[data-edit]"))) return openEditor(getItem(el.dataset.edit));
   if (t.closest(".chk")) return;
   if (t.closest("[data-fav-view]")) return go(null, "fav");
