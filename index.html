@@ -214,7 +214,34 @@ dialog.sheet{width:min(760px,calc(100% - 24px))}
 .opt-add{display:flex;gap:6px;align-items:center}
 .opt-add input{height:38px;padding:6px 10px;font-size:14px}
 dialog{overflow:auto}
-.ed-actions{position:sticky;bottom:0;background:var(--panel);padding:12px 0 2px;margin-bottom:-2px}
+.ed-actions{padding-top:4px}
+#editor .ed-head{position:sticky;top:0;z-index:3;background:var(--panel);margin:-20px -20px 0;padding:12px 16px 10px;border-bottom:1px solid var(--line);gap:6px;justify-content:flex-start}
+#editor .ed-head h2{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#editor #edNotes{margin:0}
+.dlg:focus,form:focus{outline:none}
+:focus:not(:focus-visible){outline:none}
+dialog{overscroll-behavior:contain}
+html.locked,html.locked body{overflow:hidden}
+.vtext{margin-top:2px}
+/* ideias */
+#ideaBox{margin-bottom:14px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px}
+#ideaNew{min-height:70px;resize:vertical;border:0;padding:6px 4px;background:transparent}
+#ideaNew:focus{border:0}
+#ideaBox .note-add-row{margin:4px 0 0}
+.ideas{display:grid;gap:8px}
+.idea{display:flex;gap:10px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 6px 10px 12px}
+.idea-chk{width:24px;height:24px;border:2px solid var(--muted);border-radius:50%;display:grid;place-items:center;flex:none;margin-top:1px;color:var(--accent-text)}
+.idea.done .idea-chk{background:var(--accent);border-color:var(--accent)}
+.idea-chk svg{width:14px;height:14px}
+.idea-body{flex:1;min-width:0}
+.idea-body p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.idea.done .idea-body p{text-decoration:line-through;color:var(--muted)}
+.idea-body textarea{min-height:80px}
+.idea-meta{font-size:12px;color:var(--muted);margin-top:3px}
+.idea .acts{display:flex}
+.idea .acts button{width:32px;height:32px;display:grid;place-items:center;border-radius:8px;color:var(--muted)}
+.idea .acts svg{width:15px;height:15px}
+.sec-label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:12px 2px 0}
 
 #toast{display:none;position:fixed;inset:auto auto calc(96px + env(safe-area-inset-bottom)) 50%;transform:translateX(-50%);margin:0;border:0;background:var(--text);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;z-index:100;max-width:calc(100% - 32px);text-align:center;box-shadow:var(--shadow)}
 #toast.show{display:block}
@@ -236,7 +263,8 @@ dialog{overflow:auto}
   dialog.sheet{width:100%;max-width:100%;height:100%;height:100dvh;max-height:100%;margin:0;border:0;border-radius:0}
   dialog.sheet .ed{height:100%;padding-top:calc(14px + env(safe-area-inset-top));padding-bottom:calc(14px + env(safe-area-inset-bottom))}
   dialog.sheet #content-field{min-height:45vh}
-  dialog.sheet .ed{height:auto;min-height:100%}
+  dialog.sheet .ed{height:auto;min-height:100%;padding-top:0}
+  #editor .ed-head{margin-top:0;padding-top:calc(10px + env(safe-area-inset-top))}
   dialog.bsheet{width:100%;max-width:100%;margin:auto 0 0;border:0;border-radius:22px 22px 0 0;max-height:88vh}
   dialog.bsheet .dlg{padding-bottom:calc(16px + env(safe-area-inset-bottom))}
   .bsheet .grab{display:block}
@@ -278,6 +306,10 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%}
         <button class="icon-btn" id="backBtn" aria-label="Voltar" data-i="back"></button>
         <h1 id="pageTitle">Início</h1>
       </div>
+      <div id="ideaBox" hidden>
+        <textarea id="ideaNew" placeholder="Anote uma ideia de vídeo…"></textarea>
+        <div class="note-add-row"><button type="button" class="btn primary" id="ideaAdd">Guardar ideia</button></div>
+      </div>
       <div id="content" class="lists"></div>
     </main>
   </div>
@@ -298,11 +330,12 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%}
 <div id="toast" role="status" aria-live="polite"></div>
 
 <dialog id="editor" class="sheet">
-  <form id="editorForm" class="dlg ed">
+  <form id="editorForm" class="dlg ed" tabindex="-1">
     <div class="ed-head">
+      <button type="button" class="icon-btn" id="edClose" aria-label="Fechar" data-i="x"></button>
       <h2 id="edHeading">Novo prompt</h2>
       <button type="button" class="copy" id="edNotes"></button>
-      <button type="button" class="icon-btn" id="edClose" aria-label="Fechar" data-i="x"></button>
+      <button type="submit" class="btn primary" id="savePrompt">Salvar</button>
     </div>
     <input id="title" type="text" class="ed-title" maxlength="160" placeholder="Título" required autocomplete="off">
     <textarea id="content-field" placeholder="Escreva ou cole seu prompt aqui…" required></textarea>
@@ -315,15 +348,12 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%}
     </section>
     <div class="ed-actions">
       <button type="button" class="btn" id="edCopy" data-i="copy"><span>Copiar</span></button>
-      <span class="grow"></span>
-      <button type="button" class="btn" id="edCancel">Cancelar</button>
-      <button type="submit" class="btn primary" id="savePrompt">Salvar</button>
     </div>
   </form>
 </dialog>
 
 <dialog id="varSheet" class="bsheet">
-  <div class="dlg">
+  <div class="dlg" tabindex="-1">
     <div class="grab"></div>
     <h3 id="vsTitle"></h3>
     <p class="hint" id="vsHint">Escolha os ajustes (opcional)</p>
@@ -335,7 +365,7 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%}
 </dialog>
 
 <dialog id="notesSheet" class="bsheet">
-  <div class="dlg">
+  <div class="dlg" tabindex="-1">
     <div class="grab"></div>
     <div class="ed-head"><h3 id="nsTitle"></h3><button type="button" class="icon-btn" id="nsClose" aria-label="Fechar" data-i="x"></button></div>
     <p class="hint">Só pra você. As notas não vão junto no prompt copiado.</p>
@@ -423,6 +453,7 @@ const I = {
   doc: sv('<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>'),
   download: sv('<path d="M12 4v11m-5-5 5 5 5-5M4 20h16"/>'),
   upload: sv('<path d="M12 20V9m-5 5 5-5 5 5M4 4h16"/>'),
+  bulb: sv('<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.5 1.1 1.3 1.1 2.2h5c0-.9.4-1.7 1.1-2.2A6 6 0 0 0 12 3z"/>'),
   note: sv('<path d="M4 4h16v10l-6 6H4z"/><path d="M14 20v-6h6"/>'),
   chev: sv('<path d="m6 9 6 6 6-6"/>'),
   logout: sv('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>')
@@ -446,6 +477,7 @@ let editingId = null;
 let menuAnchor = null;
 let sheetId = null;         // prompt aberto na janela de variações
 let edOpen = new Set();     // variações com "Ajustar frase" aberto
+let ideaEditing = null;     // ideia sendo editada
 let notesId = null;         // prompt aberto na janela de notas
 let noteEditing = null;     // nota sendo editada
 
@@ -477,7 +509,7 @@ const PRESETS = [
     options: ["loiro", "ruivo", "castanho", "preto", "platinado", "rosa"] },
   { label: "Aparência", name: "Aparência da modelo", template: "A modelo deve ter uma aparência marcante: {opção}. Mantenha o visual realista e natural, como uma pessoa de verdade, e continue respeitando todas as outras regras sobre a nova identidade e a fidelidade ao produto.",
     options: ["a mulher mais bonita do mundo, com traços perfeitos e harmoniosos", "uma mulher de aparência muito excêntrica e fora do comum", "uma mulher de beleza exótica e rara", "uma mulher comum, com aparência de pessoa real do dia a dia"] },
-  { label: "Escrita na tela", name: "Escrita na tela", template: "Adicione um texto curto e chamativo na tela destacando o produto. Isso é uma exceção à regra que proíbe textos.",
+  { label: "Escrita na tela", name: "Escrita na tela", template: "Adicione na tela este texto, escrito exatamente assim, em português, sem traduzir nem alterar nenhuma palavra: \"{opção}\". Esta é uma exceção à regra que proíbe textos na tela.",
     options: [] }
 ];
 const getVars = p => Array.isArray(p?.variations) ? p.variations.filter(v => v && v.name) : [];
@@ -485,7 +517,11 @@ const PH = /\{\s*op[çc][ãa]o\s*\}/i;
 const PH_ALL = /\{\s*op[çc][ãa]o\s*\}/gi;
 function variationLine(v, choice) {
   const t = (v.template || "").trim();
-  if (!v.options?.length) return t || v.name;
+  if (!v.options?.length) {
+    const txt = String(choice ?? "").trim();
+    if (t && PH.test(t)) return t.replace(PH_ALL, txt);
+    return `${v.name}: use exatamente este texto, em português, sem traduzir nem alterar nenhuma palavra: "${txt}"`;
+  }
   if (!t) return `${v.name}: ${choice}`;
   return PH.test(t) ? t.replace(PH_ALL, choice) : `${t} ${choice}`;
 }
@@ -511,6 +547,7 @@ const getItem = id => records.find(x => x.id === id);
 const parentOf = x => x?.parentId || null;
 const folders = () => records.filter(x => x.type === "folder");
 const prompts = () => records.filter(x => x.type === "prompt");
+const ideas = () => records.filter(x => x.type === "idea");
 const ms = t => !t ? 0 : typeof t.toMillis === "function" ? t.toMillis()
   : typeof t === "string" ? (Date.parse(t) || 0) : typeof t === "number" ? t : 0;
 const recency = p => ms(p.lastUsedAt) || ms(p.updatedAt) || ms(p.createdAt);
@@ -639,6 +676,10 @@ function pickFolder(title, exclude = new Set(), currentId) {
   });
 }
 
+// trava a rolagem do fundo enquanto uma janela está aberta
+const syncLock = () => document.documentElement.classList.toggle("locked", !!document.querySelector("dialog[open]"));
+document.querySelectorAll("dialog").forEach(d => new MutationObserver(syncLock).observe(d, { attributes: true, attributeFilter: ["open"] }));
+
 // fechar janelas ao tocar fora
 document.querySelectorAll("dialog").forEach(dlg => {
   dlg.addEventListener("click", e => {
@@ -680,7 +721,8 @@ addEventListener("resize", closeMenu);
 /* ================= NAVEGAÇÃO ================= */
 function go(folderId, v = "folder", push = true) {
   view = v;
-  currentFolder = v === "fav" ? null : folderId;
+  currentFolder = v === "folder" ? folderId : null;
+  ideaEditing = null;
   $("search").value = "";
   selected.clear();
   closeMenu();
@@ -694,7 +736,7 @@ addEventListener("popstate", e => {
 });
 function goBack() {
   if (query()) { $("search").value = ""; return render(); }
-  if (view === "fav") return go(null);
+  if (view !== "folder") return go(null);
   if (currentFolder) go(parentOf(getItem(currentFolder)));
 }
 
@@ -702,9 +744,11 @@ function goBack() {
 function renderTree() {
   const favCount = prompts().filter(p => p.favorite).length;
   const searching = !!query();
-  const isActive = (id, v = "folder") => !searching && view === v && (v === "fav" || currentFolder === id);
+  const isActive = (id, v = "folder") => !searching && view === v && (v !== "folder" || currentFolder === id);
   let h = `<button class="nav-item${isActive(null) ? " active" : ""}" data-nav="">${I.home}<span class="label">Início</span></button>`;
   if (favCount) h += `<button class="nav-item${isActive(null, "fav") ? " active" : ""}" data-nav-fav>${I.star}<span class="label">Favoritos</span><span class="count">${favCount}</span></button>`;
+  const openIdeas = ideas().filter(i => !i.done).length;
+  h += `<button class="nav-item${isActive(null, "ideas") ? " active" : ""}" data-nav-ideas>${I.bulb}<span class="label">Ideias de vídeos</span><span class="count">${openIdeas || ""}</span></button>`;
   const tree = folderTree();
   h += `<div class="nav-head">Pastas</div>`;
   h += tree.length
@@ -759,6 +803,9 @@ function render() {
     promptList = prompts().filter(p => `${p.title} ${p.content}`.toLocaleLowerCase("pt-BR").includes(ql));
     showPath = true;
     empty = `<strong>Nada encontrado</strong>Tente outra palavra.`;
+  } else if (view === "ideas") {
+    title = "Ideias de vídeos";
+    crumbs = [{ id: null, label: "Início" }];
   } else if (view === "fav") {
     title = "Favoritos";
     crumbs = [{ id: null, label: "Início" }];
@@ -783,11 +830,20 @@ function render() {
   $("crumbs").innerHTML = crumbs.map(c => `<button data-crumb="${esc(c.id || "")}">${esc(c.label)}</button><span>›</span>`).join("");
   $("crumbs").hidden = !crumbs.length;
   $("pageTitle").textContent = title;
-  $("backBtn").hidden = !(q || view === "fav" || currentFolder);
+  $("backBtn").hidden = !(q || view !== "folder" || currentFolder);
+  const ideasMode = view === "ideas" && !q;
+  $("ideaBox").hidden = !ideasMode;
+  if (ideasMode) {
+    $("content").innerHTML = renderIdeas();
+    updateSelbar();
+    return;
+  }
+  const isHome = !q && view === "folder" && !currentFolder;
 
   let h = "";
-  if (favRow || folderList.length) {
+  if (favRow || folderList.length || isHome) {
     h += `<div class="list">`;
+    if (isHome) { const n = ideas().filter(i => !i.done).length; h += `<div class="row folder" data-ideas-view tabindex="0"><span class="fav-mark" style="margin:0;color:var(--note-ink)">${I.bulb}</span><div class="main" style="padding-left:0"><span class="title">Ideias de vídeos</span></div><span class="count">${n || ""}</span><span style="width:38px"></span></div>`; }
     if (favRow) h += `<div class="row folder" data-fav-view tabindex="0"><span class="fav-mark" style="margin:0">${I.starFill}</span><div class="main" style="padding-left:0"><span class="title">Favoritos</span></div><span class="count">${prompts().filter(p => p.favorite).length}</span><span style="width:38px"></span></div>`;
     h += folderList.map(f => folderRow(f, q && parentOf(f))).join("");
     h += `</div>`;
@@ -833,7 +889,7 @@ function openSheet(id) {
   sheetId = id;
   renderSheet();
   $("varSheet").showModal();
-  $("vsCopy").focus();
+  $("varSheet").querySelector(".dlg").focus({ preventScroll: true });
 }
 function renderSheet() {
   const p = getItem(sheetId);
@@ -845,17 +901,32 @@ function renderSheet() {
   $("vsTitle").textContent = p.title;
   $("vsBody").innerHTML = getVars(p).map(v => {
     const vid = esc(v.id), cur = pk[v.id];
-    let chips = `<button type="button" class="chip${cur === undefined ? " on" : ""}" data-pick="${vid}" data-k="none">${v.options?.length ? "Nenhum" : "Não"}</button>`;
-    chips += v.options?.length
-      ? v.options.map((o, k) => `<button type="button" class="chip${cur === o ? " on" : ""}" data-pick="${vid}" data-k="${k}">${esc(o)}</button>`).join("")
-        + `<button type="button" class="chip add" data-newopt="${vid}">+ outra</button>`
-      : `<button type="button" class="chip${cur !== undefined ? " on" : ""}" data-pick="${vid}" data-k="-1">Sim</button>`;
+    if (!v.options?.length) {
+      return `<div class="vgroup"><div class="vgroup-name">${esc(v.name)}</div>
+        <textarea class="vtext" rows="2" data-vtext="${vid}" placeholder="Escreva aqui o que quer (deixe vazio para não usar)">${esc(typeof cur === "string" ? cur : "")}</textarea></div>`;
+    }
+    const chips = `<button type="button" class="chip${cur === undefined ? " on" : ""}" data-pick="${vid}" data-k="none">Nenhum</button>`
+      + v.options.map((o, k) => `<button type="button" class="chip${cur === o ? " on" : ""}" data-pick="${vid}" data-k="${k}">${esc(o)}</button>`).join("")
+      + `<button type="button" class="chip add" data-newopt="${vid}">+ outra</button>`;
     return `<div class="vgroup"><div class="vgroup-name">${esc(v.name)}</div><div class="chips">${chips}</div></div>`;
   }).join("");
+  updateSheetBtn();
+}
+function updateSheetBtn() {
+  const p = getItem(sheetId);
+  if (!p) return;
+  const pk = picks[p.id] || {};
   const act = activePicks(p);
   $("vsCopy").innerHTML = I.copy + `<span>${act.length ? "Copiar com " + esc(act.map(v => pickLabel(v, pk[v.id])).join(" + ")) : getVars(p).length ? "Copiar original" : "Copiar"}</span>`;
   $("vsOrig").hidden = !act.length;
 }
+$("vsBody").addEventListener("input", e => {
+  const vid = e.target.dataset.vtext;
+  if (!vid) return;
+  const pk = picks[sheetId] ||= {};
+  if (e.target.value.trim()) pk[vid] = e.target.value; else delete pk[vid];
+  updateSheetBtn();
+});
 $("vsBody").addEventListener("click", e => {
   const p = getItem(sheetId);
   if (!p) return;
@@ -1066,9 +1137,10 @@ function renderVars() {
     </div>
     ${v.options.length ? `<div class="chips">${v.options.map((o, k) => `<span class="opt-chip">${esc(o)}<button type="button" data-delopt="${k}" aria-label="Remover ${esc(o)}">${I.x}</button></span>`).join("")}</div>` : ""}
     <div class="opt-add">
-      <input type="text" data-f="newopt" placeholder="${v.options.length ? "Adicionar opção" : "Opções (vazio = liga/desliga)"}" autocomplete="off" enterkeyhint="done">
+      <input type="text" data-f="newopt" placeholder="${v.options.length ? "Adicionar opção" : "Opções (opcional)"}" autocomplete="off" enterkeyhint="done">
       <button type="button" class="icon-btn" data-addopt aria-label="Adicionar opção">${I.plus}</button>
     </div>
+    ${v.options.length ? "" : `<p class="hint" style="margin:0">Sem opções: na hora de copiar aparece um campo pra você escrever o texto.</p>`}
     <button type="button" class="linkbtn" data-adv>${edOpen.has(v.id) ? "Esconder frase" : "Ajustar frase ›"}</button>
     ${edOpen.has(v.id) ? `<textarea data-f="template" placeholder="Deixe vazio e o app escreve sozinho (ex.: “${esc(v.name || "Estilo musical")}: Trap”). Se quiser, escreva sua frase e use {opção} onde entra a escolha.">${esc(v.template)}</textarea>` : ""}
   </div>`).join("");
@@ -1150,7 +1222,7 @@ function openEditor(p = null) {
   editor.showModal();
   $("content-field").scrollTop = 0;
   if (!p) $("title").focus();
-  else $("edClose").focus();
+  else $("editorForm").focus({ preventScroll: true });
 }
 function editorDirty() {
   const p = editingId ? getItem(editingId) : null;
@@ -1167,7 +1239,6 @@ async function closeEditor() {
 }
 editor.addEventListener("cancel", e => { e.preventDefault(); closeEditor(); });
 $("edClose").onclick = closeEditor;
-$("edCancel").onclick = closeEditor;
 $("edCopy").onclick = async () => {
   if (!(await writeClipboard($("content-field").value))) return toast("Não foi possível copiar.");
   $("edCopy").querySelector("span").textContent = "Copiado ✓";
@@ -1198,6 +1269,59 @@ $("editorForm").onsubmit = async e => {
   if (ok) { editor.close(); toast(variations.length ? "Salvo! Toque em Copiar para escolher as variações" : (wasEditing ? "Prompt salvo" : "Prompt criado")); }
 };
 
+/* ================= IDEIAS ================= */
+function ideaCard(i) {
+  const ed = i.id === ideaEditing;
+  const keep = ed ? $("content").querySelector(".iedit")?.value : undefined;
+  return `<div class="idea${i.done ? " done" : ""}" data-iid="${esc(i.id)}">
+    <button type="button" class="idea-chk" data-idone aria-label="${i.done ? "Marcar como não feita" : "Marcar como feita"}">${i.done ? I.check : ""}</button>
+    <div class="idea-body">
+      ${ed ? `<textarea class="iedit">${esc(keep ?? i.content)}</textarea>
+        <div class="note-add-row" style="margin:8px 0 2px"><button type="button" class="btn" data-icancel>Cancelar</button><button type="button" class="btn primary" data-isave>Salvar</button></div>`
+        : `<p>${esc(i.content)}</p>`}
+      <div class="idea-meta">${esc(fmtWhen(ms(i.createdAt)))}</div>
+    </div>
+    <div class="acts"><button type="button" data-iedit aria-label="Editar ideia">${I.edit}</button><button type="button" data-idel aria-label="Excluir ideia">${I.trash}</button></div>
+  </div>`;
+}
+function renderIdeas() {
+  const all = ideas();
+  const open = all.filter(i => !i.done).sort((a, b) => ms(b.createdAt) - ms(a.createdAt));
+  const done = all.filter(i => i.done).sort((a, b) => ms(b.updatedAt) - ms(a.updatedAt));
+  if (!all.length) return `<div class="empty"><strong>Nenhuma ideia ainda</strong>Escreva acima e toque em “Guardar ideia”.</div>`;
+  let h = open.length ? `<div class="ideas">${open.map(ideaCard).join("")}</div>` : `<p class="notes-empty">Tudo feito por aqui ✨</p>`;
+  if (done.length) h += `<div class="sec-label">Feitas (${done.length})</div><div class="ideas">${done.map(ideaCard).join("")}</div>`;
+  return h;
+}
+async function ideaClick(e, box) {
+  const id = box.dataset.iid;
+  const i = getItem(id);
+  if (!i) return;
+  if (e.target.closest("[data-idone]")) return run(() => updateDoc(itemRef(id), { done: !i.done, updatedAt: serverTimestamp() }), i.done ? null : "Ideia marcada como feita");
+  if (e.target.closest("[data-iedit]")) { ideaEditing = id; render(); return $("content").querySelector(".iedit")?.focus(); }
+  if (e.target.closest("[data-icancel]")) { ideaEditing = null; return render(); }
+  if (e.target.closest("[data-isave]")) {
+    const text = box.querySelector(".iedit").value.trim();
+    if (!text) return;
+    ideaEditing = null;
+    return run(() => updateDoc(itemRef(id), { content: text, updatedAt: serverTimestamp() }), "Ideia salva");
+  }
+  if (e.target.closest("[data-idel]")) {
+    if (!(await confirmBox("Excluir esta ideia?", "", "Excluir", true))) return;
+    if (ideaEditing === id) ideaEditing = null;
+    run(() => commitOps([b => b.delete(itemRef(id))]), "Ideia excluída");
+  }
+}
+$("ideaAdd").onclick = async () => {
+  const text = $("ideaNew").value.trim();
+  if (!text) return $("ideaNew").focus();
+  const ok = await run(() => addDoc(itemsRef(), {
+    type: "idea", title: "", content: text, parentId: null, done: false,
+    createdAt: serverTimestamp(), updatedAt: serverTimestamp()
+  }), "Ideia guardada");
+  if (ok) $("ideaNew").value = "";
+};
+
 /* ================= EVENTOS DA TELA ================= */
 $("content").addEventListener("click", e => {
   const t = e.target;
@@ -1212,10 +1336,12 @@ $("content").addEventListener("click", e => {
   if ((el = t.closest("[data-edit]"))) return openEditor(getItem(el.dataset.edit));
   if (t.closest(".chk")) return;
   if (t.closest("[data-fav-view]")) return go(null, "fav");
+  if (t.closest("[data-ideas-view]")) return go(null, "ideas");
+  if ((el = t.closest("[data-iid]"))) return ideaClick(e, el);
   if ((el = t.closest("[data-open]"))) return go(el.dataset.open);
 });
 $("content").addEventListener("keydown", e => {
-  if (e.key === "Enter" && e.target.matches("[data-open],[data-fav-view]")) e.target.click();
+  if (e.key === "Enter" && e.target.matches("[data-open],[data-fav-view],[data-ideas-view]")) e.target.click();
 });
 $("content").addEventListener("change", e => {
   const id = e.target.dataset?.sel;
@@ -1229,6 +1355,7 @@ $("tree").addEventListener("click", e => {
   const b = e.target.closest("button");
   if (!b) return;
   if (b.hasAttribute("data-nav-fav")) return go(null, "fav");
+  if (b.hasAttribute("data-nav-ideas")) return go(null, "ideas");
   go(b.dataset.nav || null);
 });
 $("crumbs").addEventListener("click", e => {
@@ -1249,7 +1376,7 @@ document.addEventListener("keydown", e => {
   }
 });
 
-$("fab").onclick = () => openMenu($("fab"), [
+$("fab").onclick = () => view === "ideas" && !query() ? ($("ideaNew").focus(), scrollTo(0, 0)) : openMenu($("fab"), [
   { icon: "doc", label: "Novo prompt", action: () => openEditor() },
   { icon: "folder", label: "Nova pasta", action: newFolder }
 ]);
@@ -1380,7 +1507,7 @@ $("importFile").onchange = async event => {
 
     const valid = backup.items.every(item =>
       item && typeof item.id === "string" &&
-      ["folder", "prompt"].includes(item.type) &&
+      ["folder", "prompt", "idea"].includes(item.type) &&
       typeof item.title === "string" && typeof item.content === "string" &&
       (item.parentId == null || typeof item.parentId === "string"));
     if (!valid) throw new Error("Existem itens inválidos no arquivo.");
